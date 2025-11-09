@@ -13,6 +13,9 @@ if (!fs.existsSync(config.logging.dir)) {
  */
 export const logger = pino({
   level: config.logging.level,
+  serializers: {
+    error: pino.stdSerializers.err,
+  },
   transport: {
     targets: [
       {

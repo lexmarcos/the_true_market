@@ -10,39 +10,37 @@ export class SteamAuthService {
   private readonly STEAM_MARKET_URL = 'https://steamcommunity.com/market/';
 
   /**
-   * Check if user is logged into Steam
+   * Check if user is logged into Steam by verifying cookies
+   * This method does NOT navigate to any page
    */
-  async checkLoginStatus(page: Page): Promise<boolean> {
+  private async checkLoginStatusByCookies(page: Page): Promise<boolean> {
     try {
-      logger.info('Checking Steam login status...');
+      const cookies = await page.cookies();
+      const steamLoginCookie = cookies.find((c) => c.name === 'steamLoginSecure');
+      const sessionIdCookie = cookies.find((c) => c.name === 'sessionid');
 
-      // Navigate to Steam Market to check login
-      await page.goto(this.STEAM_MARKET_URL, { waitUntil: 'networkidle2' });
-
-      // Wait a bit for the page to fully load
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Check if user account dropdown exists (indicates logged in)
-      const isLoggedIn = await page.evaluate(() => {
-        // Check for user account dropdown
-        const accountMenu = document.querySelector('#account_pulldown');
-        const accountLink = document.querySelector('a[href*="steamcommunity.com/id/"]');
-        const loginButton = document.querySelector('a[href*="login"]');
-
-        return (accountMenu !== null || accountLink !== null) && loginButton === null;
-      });
+      // User is logged in if both critical cookies exist
+      const isLoggedIn = !!(steamLoginCookie && sessionIdCookie);
 
       if (isLoggedIn) {
-        logger.info('User is logged into Steam');
+        logger.info('User is logged into Steam (verified by cookies)');
       } else {
-        logger.warn('User is NOT logged into Steam');
+        logger.warn('User is NOT logged into Steam (missing login cookies)');
       }
 
       return isLoggedIn;
     } catch (error) {
-      logger.error({ error }, 'Error checking login status');
+      logger.error({ error }, 'Error checking login status by cookies');
       return false;
     }
+  }
+
+  /**
+   * Check if user is logged into Steam
+   * Uses cookie verification to avoid unnecessary navigation
+   */
+  async checkLoginStatus(page: Page): Promise<boolean> {
+    return this.checkLoginStatusByCookies(page);
   }
 
   /**
