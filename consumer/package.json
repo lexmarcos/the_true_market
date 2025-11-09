@@ -1,0 +1,31 @@
+{
+  "name": "bitskins-consumer",
+  "version": "1.0.0",
+  "description": "Puppeteer consumer for BitSkins bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "puppeteer",
+    "bitskins",
+    "scraper"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "pino": "^10.1.0",
+    "pino-pretty": "^13.1.2",
+    "puppeteer": "^24.29.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
