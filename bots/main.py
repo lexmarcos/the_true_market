@@ -19,7 +19,8 @@ class BitSkinsMonitor:
         rabbitmq_port: int = 5672,
         rabbitmq_user: str = "guest",
         rabbitmq_password: str = "guest",
-        rabbitmq_queue: str = "items"
+        rabbitmq_exchange: str = "skin.market.data",
+        rabbitmq_routing_key: str = "skin.market.bitskins"
     ):
         self.api_url = "https://api.bitskins.com/market/search/730"
         self.steam_market_url = "https://steamcommunity.com/market/priceoverview/"
@@ -34,7 +35,8 @@ class BitSkinsMonitor:
         self.rabbitmq_port = rabbitmq_port
         self.rabbitmq_user = rabbitmq_user
         self.rabbitmq_password = rabbitmq_password
-        self.rabbitmq_queue = rabbitmq_queue
+        self.rabbitmq_exchange = rabbitmq_exchange
+        self.rabbitmq_routing_key = rabbitmq_routing_key
         self.rabbitmq_connection = None
         self.rabbitmq_channel = None
         
@@ -78,7 +80,7 @@ class BitSkinsMonitor:
     
     def connect_rabbitmq(self):
         """
-        Conecta ao RabbitMQ e cria o canal
+        Conecta ao RabbitMQ, cria o exchange e configura o roteamento
         """
         try:
             credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
@@ -93,11 +95,16 @@ class BitSkinsMonitor:
             self.rabbitmq_connection = pika.BlockingConnection(parameters)
             self.rabbitmq_channel = self.rabbitmq_connection.channel()
             
-            # Declarar a fila (será criada se não existir)
-            self.rabbitmq_channel.queue_declare(queue=self.rabbitmq_queue, durable=True)
+            # Declarar o exchange do tipo topic (será criado se não existir)
+            self.rabbitmq_channel.exchange_declare(
+                exchange=self.rabbitmq_exchange,
+                exchange_type='topic',
+                durable=True
+            )
             
             print(f"✅ Conectado ao RabbitMQ em {self.rabbitmq_host}:{self.rabbitmq_port}")
-            print(f"📬 Fila: {self.rabbitmq_queue}")
+            print(f"� Exchange: {self.rabbitmq_exchange} (tipo: topic)")
+            print(f"🔑 Routing Key: {self.rabbitmq_routing_key}")
             return True
             
         except Exception as e:
@@ -119,14 +126,14 @@ class BitSkinsMonitor:
     
     def send_to_queue(self, item_data: Dict[str, Any]) -> bool:
         """
-        Envia os dados do item para a fila do RabbitMQ
+        Envia os dados do item para o exchange com a routing key configurada
         """
         try:
             message = json.dumps(item_data, ensure_ascii=False)
             
             self.rabbitmq_channel.basic_publish(
-                exchange='',
-                routing_key=self.rabbitmq_queue,
+                exchange=self.rabbitmq_exchange,
+                routing_key=self.rabbitmq_routing_key,
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # Make message persistent
@@ -137,14 +144,14 @@ class BitSkinsMonitor:
             return True
             
         except Exception as e:
-            print(f"❌ Erro ao enviar para fila: {e}")
+            print(f"❌ Erro ao enviar para exchange: {e}")
             # Tentar reconectar
             if self.connect_rabbitmq():
                 try:
                     message = json.dumps(item_data, ensure_ascii=False)
                     self.rabbitmq_channel.basic_publish(
-                        exchange='',
-                        routing_key=self.rabbitmq_queue,
+                        exchange=self.rabbitmq_exchange,
+                        routing_key=self.rabbitmq_routing_key,
                         body=message,
                         properties=pika.BasicProperties(
                             delivery_mode=2,
@@ -601,7 +608,8 @@ def main():
     RABBITMQ_PORT = 5672
     RABBITMQ_USER = "guest"
     RABBITMQ_PASSWORD = "guest"
-    RABBITMQ_QUEUE = "bitskins_items"
+    RABBITMQ_EXCHANGE = "skin.market.data"
+    RABBITMQ_ROUTING_KEY = "skin.market.bitskins"
     
     # Criar instância do monitor com desconto mínimo de 55%
     monitor = BitSkinsMonitor(
@@ -610,7 +618,8 @@ def main():
         rabbitmq_port=RABBITMQ_PORT,
         rabbitmq_user=RABBITMQ_USER,
         rabbitmq_password=RABBITMQ_PASSWORD,
-        rabbitmq_queue=RABBITMQ_QUEUE
+        rabbitmq_exchange=RABBITMQ_EXCHANGE,
+        rabbitmq_routing_key=RABBITMQ_ROUTING_KEY
     )
     
     # Opção 1: Verificação única de armas e facas

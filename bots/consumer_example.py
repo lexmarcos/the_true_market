@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Exemplo de consumidor da fila RabbitMQ
-Este script lê as mensagens da fila e processa os itens
+Exemplo de consumidor da fila RabbitMQ com Topic Exchange
+Este script lê as mensagens do exchange usando routing keys
 """
 
 import pika
 import json
+import sys
 
 
 def callback(ch, method, properties, body):
@@ -16,13 +17,15 @@ def callback(ch, method, properties, body):
         # Decodificar JSON
         item = json.loads(body)
         
-        # Identificar a fila de origem
-        queue_name = method.routing_key
+        # Identificar a routing key (origem do item)
+        routing_key = method.routing_key
+        store = routing_key.split('.')[-1] if routing_key else 'unknown'
         
         print("\n" + "="*60)
-        print(f"📦 NOVO ITEM RECEBIDO DA FILA: {queue_name}")
+        print(f"📦 NOVO ITEM RECEBIDO")
         print("="*60)
-        print(f"🏪 Loja: {item.get('store', 'unknown').upper()}")
+        print(f"🔑 Routing Key: {routing_key}")
+        print(f"🏪 Loja: {item.get('store', store).upper()}")
         print(f"🎯 Nome: {item.get('name')}")
         
         # Formatar preço com moeda correta
@@ -64,14 +67,27 @@ def callback(ch, method, properties, body):
 
 def main():
     """
-    Conecta ao RabbitMQ e começa a consumir mensagens de múltiplas filas
+    Conecta ao RabbitMQ e começa a consumir mensagens usando Topic Exchange
     """
     # Configurações
     RABBITMQ_HOST = "localhost"
     RABBITMQ_PORT = 5672
     RABBITMQ_USER = "guest"
     RABBITMQ_PASSWORD = "guest"
-    RABBITMQ_QUEUES = ["bitskins_items", "dashskins_items"]  # Lista de filas para consumir
+    RABBITMQ_EXCHANGE = "skin.market.data"
+    
+    # Routing keys para consumir (pode usar wildcards)
+    # Opções:
+    # - "skin.market.*" = Recebe de TODAS as lojas
+    # - "skin.market.bitskins" = Recebe apenas da BitSkins
+    # - "skin.market.csmoney" = Recebe apenas da CSMoney
+    # - ["skin.market.bitskins", "skin.market.skinport"] = Múltiplas lojas específicas
+    
+    # Pegar routing key do argumento ou usar padrão
+    if len(sys.argv) > 1:
+        ROUTING_KEYS = [sys.argv[1]]
+    else:
+        ROUTING_KEYS = ["skin.market.*"]  # Padrão: recebe de todas as lojas
     
     try:
         # Conectar ao RabbitMQ
@@ -87,23 +103,44 @@ def main():
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
         
-        # Declarar as filas (serão criadas se não existirem)
-        for queue_name in RABBITMQ_QUEUES:
-            channel.queue_declare(queue=queue_name, durable=True)
+        # Declarar o exchange (será criado se não existir)
+        channel.exchange_declare(
+            exchange=RABBITMQ_EXCHANGE,
+            exchange_type='topic',
+            durable=True
+        )
+        
+        # Criar uma fila exclusiva temporária para este consumidor
+        result = channel.queue_declare(queue='', exclusive=True)
+        queue_name = result.method.queue
+        
+        # Fazer binding das routing keys com a fila
+        for routing_key in ROUTING_KEYS:
+            channel.queue_bind(
+                exchange=RABBITMQ_EXCHANGE,
+                queue=queue_name,
+                routing_key=routing_key
+            )
+        
+        print(f"📡 Conectado ao Exchange: {RABBITMQ_EXCHANGE}")
+        print(f"🔑 Routing Keys: {', '.join(ROUTING_KEYS)}")
+        print(f"📬 Fila temporária: {queue_name}")
+        print("\n🎧 Aguardando mensagens...")
+        print("⏸️  Pressione CTRL+C para parar")
+        print("\n💡 Dica: Use argumentos para filtrar por loja:")
+        print("   python3 consumer_example.py skin.market.bitskins")
+        print("   python3 consumer_example.py skin.market.*")
+        print()
         
         # Configurar QoS (processar uma mensagem por vez)
         channel.basic_qos(prefetch_count=1)
         
-        # Começar a consumir de todas as filas
-        print(f"🎧 Aguardando mensagens das filas: {', '.join(RABBITMQ_QUEUES)}...")
-        print("⏸️  Pressione CTRL+C para parar\n")
-        
-        for queue_name in RABBITMQ_QUEUES:
-            channel.basic_consume(
-                queue=queue_name,
-                on_message_callback=callback,
-                auto_ack=False  # Manual acknowledgment
-            )
+        # Começar a consumir
+        channel.basic_consume(
+            queue=queue_name,
+            on_message_callback=callback,
+            auto_ack=False  # Manual acknowledgment
+        )
         
         channel.start_consuming()
         
