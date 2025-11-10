@@ -1,5 +1,6 @@
 package com.thetruemarket.api.infrastructure.messaging.consumer;
 
+import com.thetruemarket.api.application.usecase.ProcessSkinMarketDataUseCase;
 import com.thetruemarket.api.domain.model.SkinMarketData;
 import com.thetruemarket.api.domain.model.SkinMarketMessage;
 import com.thetruemarket.api.infrastructure.messaging.config.RabbitMQConfig;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class SkinMarketConsumer {
+  private final ProcessSkinMarketDataUseCase processSkinMarketDataUseCase;
 
   /**
    * Listens to the skin market queue and processes incoming messages.
@@ -61,20 +63,11 @@ public class SkinMarketConsumer {
 
   /**
    * Processes the skin market data based on the source.
-   * This method can be extended to implement specific business logic
-   * for different market sources.
-   * 
+   * Delegates to the use case layer for business logic execution.
+   *
    * @param message The domain message containing market data and metadata
    */
   private void processMarketData(SkinMarketMessage message) {
-    // TODO: Implement business logic for processing market data
-    // This could involve:
-    // - Storing data in database
-    // - Performing price analysis
-    // - Triggering notifications
-    // - Updating market statistics
-    // - Calling use cases from the application layer
-
     log.debug("Processing message from {}: Item ID: {}, Asset ID: {}, Float: {}, Price: {} {}",
         message.getSource(),
         message.getData().getId(),
@@ -83,19 +76,11 @@ public class SkinMarketConsumer {
         message.getData().getPrice(),
         message.getData().getCurrency());
 
-    // Example of how to handle different sources
-    switch (message.getSource()) {
-      case STEAM:
-        log.debug("Processing Steam market data");
-        break;
-      case BITSKINS:
-        log.debug("Processing BitSkins market data");
-        break;
-      case DASHSKINS:
-        log.debug("Processing DashSkins market data");
-        break;
-      default:
-        log.warn("Unknown market source: {}", message.getSource());
-    }
+    // Delegate to application layer use case
+    // The use case will:
+    // - Save the skin if it doesn't exist
+    // - Check if price history needs update
+    // - Create history update task if needed
+    processSkinMarketDataUseCase.execute(message.getData());
   }
 }
