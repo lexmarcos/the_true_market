@@ -12,28 +12,36 @@ class DashSkinsMonitor:
     """
     
     def __init__(
-        self, 
+        self,
         min_discount: int = 15,
         rabbitmq_host: str = "localhost",
         rabbitmq_port: int = 5672,
         rabbitmq_user: str = "guest",
         rabbitmq_password: str = "guest",
-        rabbitmq_queue: str = "items"
+        rabbitmq_exchange: str = "skin.market.data",
+        rabbitmq_routing_key: str = "skin.market.dashskins",
+        search_knives: bool = True,
+        search_rifles: bool = True
     ):
         self.base_url = "https://dashskins.com.br/api/listing"
         self.min_discount = min_discount
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
-        
+
         # Configuração RabbitMQ
         self.rabbitmq_host = rabbitmq_host
         self.rabbitmq_port = rabbitmq_port
         self.rabbitmq_user = rabbitmq_user
         self.rabbitmq_password = rabbitmq_password
-        self.rabbitmq_queue = rabbitmq_queue
+        self.rabbitmq_exchange = rabbitmq_exchange
+        self.rabbitmq_routing_key = rabbitmq_routing_key
         self.rabbitmq_connection = None
         self.rabbitmq_channel = None
+
+        # Configuração de busca
+        self.search_knives = search_knives
+        self.search_rifles = search_rifles
     
     def build_params(self, item_type: str = "Rifle", page: int = 1, limit: int = 36) -> Dict[str, Any]:
         """
@@ -88,7 +96,7 @@ class DashSkinsMonitor:
     
     def connect_rabbitmq(self):
         """
-        Conecta ao RabbitMQ e cria o canal
+        Conecta ao RabbitMQ, cria o exchange e configura o roteamento
         """
         try:
             credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
@@ -99,17 +107,22 @@ class DashSkinsMonitor:
                 heartbeat=600,
                 blocked_connection_timeout=300
             )
-            
+
             self.rabbitmq_connection = pika.BlockingConnection(parameters)
             self.rabbitmq_channel = self.rabbitmq_connection.channel()
-            
-            # Declarar a fila (será criada se não existir)
-            self.rabbitmq_channel.queue_declare(queue=self.rabbitmq_queue, durable=True)
-            
+
+            # Declarar o exchange do tipo topic (será criado se não existir)
+            self.rabbitmq_channel.exchange_declare(
+                exchange=self.rabbitmq_exchange,
+                exchange_type='topic',
+                durable=True
+            )
+
             print(f"✅ Conectado ao RabbitMQ em {self.rabbitmq_host}:{self.rabbitmq_port}")
-            print(f"📬 Fila: {self.rabbitmq_queue}")
+            print(f"📮 Exchange: {self.rabbitmq_exchange} (tipo: topic)")
+            print(f"🔑 Routing Key: {self.rabbitmq_routing_key}")
             return True
-            
+
         except Exception as e:
             print(f"❌ Erro ao conectar ao RabbitMQ: {e}")
             return False
@@ -129,32 +142,32 @@ class DashSkinsMonitor:
     
     def send_to_queue(self, item_data: Dict[str, Any]) -> bool:
         """
-        Envia os dados do item para a fila do RabbitMQ
+        Envia os dados do item para o exchange com a routing key configurada
         """
         try:
             message = json.dumps(item_data, ensure_ascii=False)
-            
+
             self.rabbitmq_channel.basic_publish(
-                exchange='',
-                routing_key=self.rabbitmq_queue,
+                exchange=self.rabbitmq_exchange,
+                routing_key=self.rabbitmq_routing_key,
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # Make message persistent
                     content_type='application/json'
                 )
             )
-            
+
             return True
-            
+
         except Exception as e:
-            print(f"❌ Erro ao enviar para fila: {e}")
+            print(f"❌ Erro ao enviar para exchange: {e}")
             # Tentar reconectar
             if self.connect_rabbitmq():
                 try:
                     message = json.dumps(item_data, ensure_ascii=False)
                     self.rabbitmq_channel.basic_publish(
-                        exchange='',
-                        routing_key=self.rabbitmq_queue,
+                        exchange=self.rabbitmq_exchange,
+                        routing_key=self.rabbitmq_routing_key,
                         body=message,
                         properties=pika.BasicProperties(
                             delivery_mode=2,
@@ -190,8 +203,8 @@ class DashSkinsMonitor:
         paint_seed = wear_data.get("paintseed")
         paint_index = wear_data.get("paintindex")
         
-        name = item.get("name", "Unknown")
-        market_hash_name = item.get("market_hash_name", name)
+        market_hash_name = item.get("market_hash_name", "Unknown")
+        name = item.get("name", market_hash_name)
         
         # Processar stickers
         stickers = []
@@ -247,27 +260,25 @@ class DashSkinsMonitor:
         
         return queue_data
     
-    def monitor(self, check_interval: int = 60, max_iterations: int = None, search_knives: bool = True, search_rifles: bool = True):
+    def monitor(self, check_interval: int = 60, max_iterations: int = None):
         """
         Monitora continuamente a API em busca de itens com alto desconto
-        
+
         Args:
             check_interval: Intervalo em segundos entre cada verificação
             max_iterations: Número máximo de iterações (None para infinito)
-            search_knives: Se True, busca facas
-            search_rifles: Se True, busca rifles
         """
         # Conectar ao RabbitMQ
         if not self.connect_rabbitmq():
             print("❌ Não foi possível conectar ao RabbitMQ. Encerrando...")
             return
-        
+
         iteration = 0
-        
+
         search_types = []
-        if search_rifles:
+        if self.search_rifles:
             search_types.append("Rifle")
-        if search_knives:
+        if self.search_knives:
             search_types.append("Faca")
         
         if not search_types:
@@ -293,9 +304,9 @@ class DashSkinsMonitor:
                 
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 print(f"\n[{timestamp}] 🔍 Verificando itens (Iteração #{iteration})...")
-                
+
                 items_sent = 0
-                
+
                 # Buscar em cada tipo de item
                 for item_type in search_types:
                     type_label = "🔫 Rifles" if item_type == "Rifle" else "🔪 Facas"
@@ -322,7 +333,7 @@ class DashSkinsMonitor:
                         
                         # Enviar cada item para a fila
                         for item in high_discount_items:
-                            item_name = item.get("name", "Unknown")
+                            item_name = item.get("market_hash_name", "Unknown")
                             item_id = item.get("_id")
                             discount = item.get("discount", 0)
                             price = item.get("price", 0)
@@ -359,23 +370,19 @@ class DashSkinsMonitor:
         finally:
             self.disconnect_rabbitmq()
     
-    def single_check(self, search_knives: bool = True, search_rifles: bool = True):
+    def single_check(self):
         """
         Realiza uma única verificação e envia para a fila
-        
-        Args:
-            search_knives: Se True, busca facas
-            search_rifles: Se True, busca rifles
         """
         # Conectar ao RabbitMQ
         if not self.connect_rabbitmq():
             print("❌ Não foi possível conectar ao RabbitMQ. Encerrando...")
             return
-        
+
         search_types = []
-        if search_rifles:
+        if self.search_rifles:
             search_types.append("Rifle")
-        if search_knives:
+        if self.search_knives:
             search_types.append("Faca")
         
         if not search_types:
@@ -415,7 +422,7 @@ class DashSkinsMonitor:
                     
                     # Enviar cada item para a fila
                     for item in high_discount_items:
-                        item_name = item.get("name", "Unknown")
+                        item_name = item.get("market_hash_name", "Unknown")
                         item_id = item.get("_id")
                         discount = item.get("discount", 0)
                         price = item.get("price", 0)
@@ -450,26 +457,30 @@ def main():
     RABBITMQ_PORT = 5672
     RABBITMQ_USER = "guest"
     RABBITMQ_PASSWORD = "guest"
-    RABBITMQ_QUEUE = "dashskins_items"
-    
-    # Criar instância do monitor com desconto mínimo de 15%
+    RABBITMQ_EXCHANGE = "skin.market.data"
+    RABBITMQ_ROUTING_KEY = "skin.market.dashskins"
+
+    # Criar instância do monitor
     monitor = DashSkinsMonitor(
         min_discount=30,
         rabbitmq_host=RABBITMQ_HOST,
         rabbitmq_port=RABBITMQ_PORT,
         rabbitmq_user=RABBITMQ_USER,
         rabbitmq_password=RABBITMQ_PASSWORD,
-        rabbitmq_queue=RABBITMQ_QUEUE
+        rabbitmq_exchange=RABBITMQ_EXCHANGE,
+        rabbitmq_routing_key=RABBITMQ_ROUTING_KEY,
+        search_knives=True,
+        search_rifles=True
     )
-    
-    # Opção 1: Verificação única de rifles e facas
-    # monitor.single_check(search_knives=True, search_rifles=True)
-    
-    # Opção 2: Monitoramento contínuo de rifles e facas (verifica a cada 60 segundos)
-    monitor.monitor(check_interval=60, search_knives=True, search_rifles=True)
-    
-    # Opção 3: Apenas facas
-    # monitor.monitor(check_interval=60, search_knives=True, search_rifles=False)
+
+    # Opção 1: Verificação única
+    # monitor.single_check()
+
+    # Opção 2: Monitoramento contínuo (verifica a cada 60 segundos)
+    monitor.monitor(check_interval=60)
+
+    # Opção 3: Monitoramento com limite de iterações
+    # monitor.monitor(check_interval=60, max_iterations=10)
 
 
 if __name__ == "__main__":
