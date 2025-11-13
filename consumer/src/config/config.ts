@@ -57,6 +57,7 @@ export const config: Config = {
   scraping: {
     pollIntervalMs: getEnvNumber('POLL_INTERVAL_MS', 60000),
     rateLimitDelayMs: getEnvNumber('RATE_LIMIT_DELAY_MS', 3000),
+    priceHistoryAverageCount: getEnvNumber('PRICE_HISTORY_AVERAGE_COUNT', 10),
   },
   logging: {
     level: getEnvVar('LOG_LEVEL', 'info'),

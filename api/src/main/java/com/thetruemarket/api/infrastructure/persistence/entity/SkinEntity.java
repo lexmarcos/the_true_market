@@ -95,6 +95,13 @@ public class SkinEntity {
     private String marketSource;
 
     /**
+     * Direct link to the item on the marketplace
+     * Can be null if not applicable
+     */
+    @Column(name = "link", nullable = true, length = 1000)
+    private String link;
+
+    /**
      * When the skin was first saved
      */
     @Column(name = "created_at", nullable = false)

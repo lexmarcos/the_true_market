@@ -49,9 +49,11 @@ public class SkinMarketDataDTO {
 
   private String currency;
 
+  private String link;
+
   /**
    * Converts this DTO to a domain entity.
-   * 
+   *
    * @return SkinMarketData domain entity
    */
   public SkinMarketData toDomain() {
@@ -69,6 +71,7 @@ public class SkinMarketDataDTO {
         .name(name)
         .store(store)
         .currency(currency)
+        .link(link)
         .build();
   }
 

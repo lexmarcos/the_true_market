@@ -48,6 +48,11 @@ public class ProfitAnalysis {
     private String marketSource;
 
     /**
+     * Direct link to the item on the marketplace
+     */
+    private String link;
+
+    /**
      * Steam average price in USD cents
      */
     private Long steamAveragePrice;

@@ -84,6 +84,12 @@ public class Skin {
     private String marketSource;
 
     /**
+     * Direct link to the item on the marketplace
+     * Can be null if not applicable
+     */
+    private String link;
+
+    /**
      * When the skin was first saved
      */
     private LocalDateTime createdAt;
@@ -109,13 +115,14 @@ public class Skin {
      * @param price The market price in cents (can be null)
      * @param currency The currency of the price (can be null)
      * @param marketSource The market source (can be null)
+     * @param link The direct link to the item (can be null)
      * @return A new Skin instance with wear determined
      * @throws IllegalArgumentException if wear cannot be determined from either floatValue or name
      */
     public static Skin create(String id, String name, String assetId, Double floatValue,
                               Integer paintSeed, Integer paintIndex,
                               List<Sticker> stickers, Integer stickerCount,
-                              Long price, String currency, String marketSource) {
+                              Long price, String currency, String marketSource, String link) {
         Wear calculatedWear;
 
         // If floatValue is present, calculate wear from it
@@ -141,6 +148,7 @@ public class Skin {
                 .price(price)
                 .currency(currency)
                 .marketSource(marketSource)
+                .link(link)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

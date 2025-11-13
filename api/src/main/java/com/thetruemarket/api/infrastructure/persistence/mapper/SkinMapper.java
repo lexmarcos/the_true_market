@@ -33,6 +33,7 @@ public class SkinMapper {
                 .price(skin.getPrice())
                 .currency(skin.getCurrency())
                 .marketSource(skin.getMarketSource())
+                .link(skin.getLink())
                 .createdAt(skin.getCreatedAt())
                 .updatedAt(skin.getUpdatedAt())
                 .build();
@@ -61,6 +62,7 @@ public class SkinMapper {
                 .price(entity.getPrice())
                 .currency(entity.getCurrency())
                 .marketSource(entity.getMarketSource())
+                .link(entity.getLink())
                 .stickers(null) // Stickers not persisted in current implementation
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

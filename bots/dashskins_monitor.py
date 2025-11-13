@@ -2,6 +2,7 @@ import requests
 import time
 import json
 import pika
+import re
 from typing import List, Dict, Any
 from datetime import datetime
 
@@ -184,10 +185,32 @@ class DashSkinsMonitor:
         Filtra itens com desconto acima do mínimo configurado
         """
         return [
-            item for item in items 
+            item for item in items
             if item.get("discount", 0) >= self.min_discount
         ]
-    
+
+    def generate_slug(self, market_hash_name: str) -> str:
+        """
+        Gera o slug a partir do market_hash_name
+        Converte para lowercase e substitui espaços e parênteses
+        """
+        slug = market_hash_name.lower()
+        # Substituir parênteses por vazio
+        slug = re.sub(r'[()]', '', slug)
+        # Substituir espaços por hífen
+        slug = re.sub(r'\s+', '-', slug)
+        # Remover caracteres especiais extras
+        slug = re.sub(r'[^\w\-]', '', slug)
+        return slug
+
+    def generate_item_link(self, market_hash_name: str, item_id: str) -> str:
+        """
+        Gera o link do item no DashSkins
+        Formato: https://dashskins.com.br/item/{slug}/{_id}
+        """
+        slug = self.generate_slug(market_hash_name)
+        return f"https://dashskins.com.br/item/{slug}/{item_id}"
+
     def prepare_item_for_queue(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """
         Prepara os dados do item no formato esperado pela fila
@@ -204,7 +227,7 @@ class DashSkinsMonitor:
         paint_index = wear_data.get("paintindex")
         
         market_hash_name = item.get("market_hash_name", "Unknown")
-        name = item.get("name", market_hash_name)
+        name = market_hash_name
         
         # Processar stickers
         stickers = []
@@ -233,6 +256,9 @@ class DashSkinsMonitor:
         rarity = item.get("rarity", "")
         quality = item.get("quality", "")
         
+        # Gerar link do item
+        item_link = self.generate_item_link(market_hash_name, item_id) if item_id else None
+
         # Montar objeto final
         queue_data = {
             "price": price_cents,
@@ -255,7 +281,8 @@ class DashSkinsMonitor:
             "quality": quality,
             "source": "dashskins",
             "store": "dashskins",
-            "currency": "BRL"
+            "currency": "BRL",
+            "link": item_link
         }
         
         return queue_data

@@ -13,6 +13,7 @@ export interface Config {
   scraping: {
     pollIntervalMs: number;
     rateLimitDelayMs: number;
+    priceHistoryAverageCount: number;
   };
   logging: {
     level: string;

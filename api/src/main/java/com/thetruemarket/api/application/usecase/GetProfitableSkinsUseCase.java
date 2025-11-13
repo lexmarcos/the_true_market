@@ -104,6 +104,7 @@ public class GetProfitableSkinsUseCase {
                     .marketPrice(skin.getPrice())
                     .marketCurrency(skin.getCurrency())
                     .marketSource(skin.getMarketSource())
+                    .link(skin.getLink())
                     .lastUpdated(skin.getUpdatedAt())
                     .hasHistory(historyOpt.isPresent());
 
@@ -113,9 +114,9 @@ public class GetProfitableSkinsUseCase {
                 Long steamPrice = history.getAveragePrice();
 
                 try {
+                    // All prices are now in USD, no need to pass currency
                     ProfitResult profitResult = profitCalculationService.calculateProfit(
                             skin.getPrice(),
-                            skin.getCurrency(),
                             steamPrice
                     );
 

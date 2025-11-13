@@ -101,13 +101,14 @@ export class SteamHistoryService {
         return null;
       }
 
-      // Get last 50 prices (or less if not enough data)
-      const last50 = priceHistory.prices.slice(-50);
+      // Get last N prices (or less if not enough data) from config
+      const count = config.scraping.priceHistoryAverageCount;
+      const lastN = priceHistory.prices.slice(-count);
 
-      logger.info({ totalPrices: priceHistory.prices.length, usedForAverage: last50.length }, 'Calculating average');
+      logger.info({ totalPrices: priceHistory.prices.length, usedForAverage: lastN.length, configuredCount: count }, 'Calculating average');
 
       // Extract prices (index [1] from each array)
-      const prices = last50.map(entry => entry[1]);
+      const prices = lastN.map(entry => entry[1]);
 
       // Calculate average
       const sum = prices.reduce((acc, price) => acc + price, 0);

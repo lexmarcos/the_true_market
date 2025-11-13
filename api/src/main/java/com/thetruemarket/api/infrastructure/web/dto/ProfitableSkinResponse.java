@@ -49,6 +49,11 @@ public class ProfitableSkinResponse {
     private String marketSource;
 
     /**
+     * Direct link to the item on the marketplace
+     */
+    private String link;
+
+    /**
      * Steam average price in USD cents
      */
     private Long steamAveragePrice;
@@ -94,6 +99,7 @@ public class ProfitableSkinResponse {
                 .marketPrice(profitAnalysis.getMarketPrice())
                 .marketCurrency(profitAnalysis.getMarketCurrency())
                 .marketSource(profitAnalysis.getMarketSource())
+                .link(profitAnalysis.getLink())
                 .steamAveragePrice(profitAnalysis.getSteamAveragePrice())
                 .discountPercentage(profitAnalysis.getDiscountPercentage())
                 .profitPercentage(profitAnalysis.getProfitPercentage())

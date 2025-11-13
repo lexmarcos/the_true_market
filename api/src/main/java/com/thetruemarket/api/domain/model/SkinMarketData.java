@@ -30,4 +30,5 @@ public class SkinMarketData {
   private String name;
   private String store;
   private String currency;
+  private String link;
 }

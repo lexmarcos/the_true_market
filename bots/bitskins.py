@@ -2,6 +2,7 @@ import requests
 import time
 import json
 import pika
+import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import urllib.parse
@@ -277,7 +278,29 @@ class BitSkinsMonitor:
             profit_percentage = (profit / bitskins_price) * 100
             return profit, profit_percentage
         return 0, 0
-    
+
+    def generate_slug(self, name: str) -> str:
+        """
+        Gera o slug a partir do name
+        Converte para lowercase e substitui espaços e parênteses
+        """
+        slug = name.lower()
+        # Substituir parênteses por vazio
+        slug = re.sub(r'[()]', '', slug)
+        # Substituir espaços por hífen
+        slug = re.sub(r'\s+', '-', slug)
+        # Remover caracteres especiais extras
+        slug = re.sub(r'[^\w\-]', '', slug)
+        return slug
+
+    def generate_item_link(self, name: str, item_id: int) -> str:
+        """
+        Gera o link do item no BitSkins
+        Formato: https://bitskins.com/item/cs2/{id}/{slug}
+        """
+        slug = self.generate_slug(name)
+        return f"https://bitskins.com/item/cs2/{item_id}/{slug}"
+
     def prepare_item_for_queue(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """
         Prepara os dados do item no formato esperado pela fila
@@ -315,7 +338,10 @@ class BitSkinsMonitor:
                 stickers.append(sticker_data)
         
         sticker_count = item.get("sticker_counter", len(stickers))
-        
+
+        # Gerar link do item
+        item_link = self.generate_item_link(name, item_id) if item_id and name else None
+
         # Montar objeto final
         queue_data = {
             "price": price_cents,
@@ -329,7 +355,8 @@ class BitSkinsMonitor:
             "sticker_count": sticker_count,
             "name": name,
             "store": "bitskins",
-            "currency": "USD"
+            "currency": "USD",
+            "link": item_link
         }
         
         return queue_data
