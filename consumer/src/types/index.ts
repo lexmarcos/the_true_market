@@ -87,3 +87,34 @@ export interface BrowserOptions {
  * Logger levels
  */
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+/**
+ * History Update Task from API
+ */
+export interface HistoryUpdateTask {
+  id: number;
+  skinName: string;
+  wear: string;
+  status: 'WAITING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  createdAt: string;
+  finishedAt: string | null;
+}
+
+/**
+ * Steam price history response
+ */
+export interface SteamPriceHistory {
+  success: boolean;
+  price_prefix: string;
+  price_suffix: string;
+  prices: [string, number, string][]; // [date, price, volume]
+}
+
+/**
+ * Complete task payload
+ */
+export interface CompleteTaskPayload {
+  skinName: string;
+  wear: string;
+  averagePrice: number;
+}

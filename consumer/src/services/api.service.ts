@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { createLogger } from '../utils/logger';
 import { config } from '../config/config';
-import { ItemData, ApiResponse } from '../types';
+import { ItemData, ApiResponse, HistoryUpdateTask, CompleteTaskPayload } from '../types';
 
 const logger = createLogger('ApiService');
 
@@ -128,6 +128,55 @@ export class ApiService {
       logger.error({ error }, 'API health check failed');
       return false;
     }
+  }
+
+  /**
+   * Get history update tasks from API
+   */
+  async getHistoryUpdateTasks(): Promise<HistoryUpdateTask[]> {
+    try {
+      logger.info('Fetching history update tasks...');
+
+      const response = await this.client.get<HistoryUpdateTask[]>('/history-update-tasks');
+
+      logger.info({ taskCount: response.data.length }, 'History update tasks fetched');
+
+      return response.data;
+    } catch (error) {
+      logger.error({ error }, 'Error fetching history update tasks');
+      return [];
+    }
+  }
+
+  /**
+   * Complete a history update task
+   */
+  async completeHistoryTask(taskId: number, payload: CompleteTaskPayload): Promise<ApiResponse> {
+    return this.withRetry(async () => {
+      try {
+        logger.info({
+          taskId,
+          skinName: payload.skinName,
+          wear: payload.wear,
+          averagePrice: payload.averagePrice,
+        }, 'Completing history task');
+
+        const response = await this.client.post<ApiResponse>(
+          `/history-update-tasks/${taskId}/complete`,
+          payload
+        );
+
+        logger.info({
+          taskId,
+          success: response.data.success,
+        }, 'History task completed successfully');
+
+        return response.data;
+      } catch (error) {
+        this.handleError('completeHistoryTask', error);
+        throw error;
+      }
+    });
   }
 
   /**

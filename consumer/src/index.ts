@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer';
 import { browserService } from './services/browser.service';
 import { steamAuthService } from './services/steam-auth.service';
-import { steamScraperService } from './services/steam-scraper.service';
+import { steamHistoryService } from './services/steam-history.service';
 import { apiService } from './services/api.service';
 import { config } from './config/config';
 import logger, { createLogger } from './utils/logger';
@@ -55,7 +55,7 @@ class SteamPriceCollector {
   }
 
   /**
-   * Start the collection loop
+   * Start the history task polling loop
    */
   async start(): Promise<void> {
     if (!this.page) {
@@ -63,17 +63,17 @@ class SteamPriceCollector {
     }
 
     this.isRunning = true;
-    appLogger.info('Starting price collection loop...');
+    appLogger.info('Starting history task polling loop (every 30 seconds)...');
 
     while (this.isRunning) {
       try {
-        await this.collectAndSendPrices();
+        await this.processHistoryTasks();
 
-        // Wait for next poll interval
-        appLogger.info(`Waiting ${config.scraping.pollIntervalMs}ms until next collection...`);
-        await this.delay(config.scraping.pollIntervalMs);
+        // Wait 30 seconds before next poll
+        appLogger.info('Waiting 30 seconds until next poll...');
+        await this.delay(30000);
       } catch (error) {
-        appLogger.error({ error }, 'Error in collection loop');
+        appLogger.error({ error }, 'Error in polling loop');
         appLogger.info('Retrying in 30 seconds...');
         await this.delay(30000);
       }
@@ -81,49 +81,81 @@ class SteamPriceCollector {
   }
 
   /**
-   * Collect prices and send to API
+   * Process history update tasks from API
    */
-  private async collectAndSendPrices(): Promise<void> {
+  private async processHistoryTasks(): Promise<void> {
     if (!this.page) return;
 
     try {
-      appLogger.info('=== Starting Collection Cycle ===');
+      appLogger.info('=== Fetching History Tasks ===');
 
-      // Example: Get popular CS:GO items
-      // You can customize this to search specific items or get from a queue
-      const items = await steamScraperService.getPopularItems(this.page, 730);
-      appLogger.info(`Found ${items.length} items to scrape`);
+      // Get tasks from API
+      const tasks = await apiService.getHistoryUpdateTasks();
 
-      if (items.length === 0) {
-        appLogger.warn('No items found to scrape');
+      // Filter WAITING tasks
+      const waitingTasks = tasks.filter(task => task.status === 'WAITING');
+
+      if (waitingTasks.length === 0) {
+        appLogger.info('No WAITING tasks found');
         return;
       }
 
-      // Take first 10 items as example
-      const itemsToScrape = items.slice(0, 10);
-      appLogger.info(`Scraping ${itemsToScrape.length} items...`);
+      appLogger.info({ totalTasks: tasks.length, waitingTasks: waitingTasks.length }, 'Tasks fetched');
 
-      // Scrape items
-      const scrapedData = await steamScraperService.scrapeMultipleItems(this.page, itemsToScrape);
-      appLogger.info(`Successfully scraped ${scrapedData.length} items`);
-
-      if (scrapedData.length > 0) {
-        // Send to API
-        if (config.api.key) {
-          const result = await apiService.sendBulkItemData(scrapedData);
+      // Process tasks in FIFO order
+      for (const task of waitingTasks) {
+        try {
           appLogger.info({
+            taskId: task.id,
+            skinName: task.skinName,
+            wear: task.wear,
+          }, 'Processing task');
+
+          // Fetch price history from Steam
+          const priceHistory = await steamHistoryService.getPriceHistory(
+            this.page,
+            task.skinName,
+            task.wear
+          );
+
+          if (!priceHistory) {
+            appLogger.warn({ taskId: task.id }, 'Failed to fetch price history');
+            continue;
+          }
+
+          // Calculate average of last 10 prices
+          const averagePrice = steamHistoryService.calculateAveragePrice(priceHistory);
+
+          if (averagePrice === null) {
+            appLogger.warn({ taskId: task.id }, 'Failed to calculate average price');
+            continue;
+          }
+
+          // Complete task via API
+          const result = await apiService.completeHistoryTask(task.id, {
+            skinName: task.skinName,
+            wear: task.wear,
+            averagePrice,
+          });
+
+          appLogger.info({
+            taskId: task.id,
+            averagePrice,
             success: result.success,
-            itemCount: scrapedData.length,
-          }, 'Data sent to API');
-        } else {
-          appLogger.warn('No API key configured - skipping API submission');
-          appLogger.info({ scrapedData }, 'Scraped data');
+          }, 'Task completed successfully');
+
+          // Rate limiting between tasks
+          await this.delay(config.scraping.rateLimitDelayMs);
+
+        } catch (error) {
+          appLogger.error({ error, taskId: task.id }, 'Error processing task');
+          // Continue to next task
         }
       }
 
-      appLogger.info('=== Collection Cycle Complete ===');
+      appLogger.info('=== All Tasks Processed ===');
     } catch (error) {
-      appLogger.error({ error }, 'Error collecting prices');
+      appLogger.error({ error }, 'Error processing history tasks');
       throw error;
     }
   }
