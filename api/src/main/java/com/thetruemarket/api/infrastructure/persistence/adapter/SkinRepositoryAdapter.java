@@ -8,7 +8,9 @@ import com.thetruemarket.api.infrastructure.persistence.repository.SkinJpaReposi
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Adapter implementation of SkinRepository using JPA
@@ -36,5 +38,12 @@ public class SkinRepositoryAdapter implements SkinRepository {
     @Override
     public boolean existsById(String id) {
         return jpaRepository.existsById(id);
+    }
+
+    @Override
+    public List<Skin> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
     }
 }

@@ -43,7 +43,10 @@ public class ProcessSkinMarketDataUseCase {
                     skinMarketData.getPaintSeed(),
                     skinMarketData.getPaintIndex(),
                     skinMarketData.getStickers(),
-                    skinMarketData.getStickerCount()
+                    skinMarketData.getStickerCount(),
+                    skinMarketData.getPrice(),
+                    skinMarketData.getCurrency(),
+                    skinMarketData.getStore()
             );
 
             saveSkinUseCase.execute(skin);

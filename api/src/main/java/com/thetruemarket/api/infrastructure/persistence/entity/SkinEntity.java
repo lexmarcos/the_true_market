@@ -41,12 +41,14 @@ public class SkinEntity {
 
     /**
      * Float value determining wear condition (0.00 - 1.00)
+     * Can be null - wear will be extracted from name in this case
      */
-    @Column(name = "float_value", nullable = false)
+    @Column(name = "float_value", nullable = true)
     private Double floatValue;
 
     /**
-     * Wear category calculated from float value
+     * Wear category calculated from float value or extracted from name
+     * Always present to allow linking with price history
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "wear", nullable = false, length = 50)
@@ -60,6 +62,7 @@ public class SkinEntity {
 
     /**
      * Paint index
+     * Can be null when not available
      */
     @Column(name = "paint_index")
     private Integer paintIndex;
@@ -69,6 +72,27 @@ public class SkinEntity {
      */
     @Column(name = "sticker_count")
     private Integer stickerCount;
+
+    /**
+     * Market price in cents
+     * Can be null if skin came without price information
+     */
+    @Column(name = "price", nullable = true)
+    private Long price;
+
+    /**
+     * Currency of the price (e.g., "USD", "BRL")
+     * Can be null if price is null
+     */
+    @Column(name = "currency", nullable = true, length = 3)
+    private String currency;
+
+    /**
+     * Market source where the skin was listed (e.g., "BITSKINS", "DASHSKINS")
+     * Can be null if not from a market listing
+     */
+    @Column(name = "market_source", nullable = true, length = 50)
+    private String marketSource;
 
     /**
      * When the skin was first saved

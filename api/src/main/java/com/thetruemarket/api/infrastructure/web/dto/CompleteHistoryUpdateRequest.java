@@ -28,7 +28,8 @@ public class CompleteHistoryUpdateRequest {
     private Wear wear;
 
     /**
-     * Average price from recent Steam sales (in cents)
+     * Average price from recent Steam sales in BRL (Brazilian Reais, in cents)
+     * Will be automatically converted to USD before saving
      * Required field, must be positive
      */
     private Long averagePrice;

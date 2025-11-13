@@ -38,7 +38,7 @@ public class SteamPriceHistory {
     private Wear wear;
 
     /**
-     * Average price from recent Steam sales (in cents)
+     * Average price from recent Steam sales in USD (cents)
      */
     private Long averagePrice;
 

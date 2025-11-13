@@ -53,4 +53,61 @@ public enum Wear {
 
         throw new IllegalStateException("Unable to determine wear for float value: " + floatValue);
     }
+
+    /**
+     * Extracts wear category from skin name
+     * Looks for wear text in parentheses, e.g., "AK-47 | Redline (Field-Tested)"
+     *
+     * @param skinName The full skin name with wear in parentheses
+     * @return The corresponding Wear category
+     * @throws IllegalArgumentException if wear cannot be extracted or mapped
+     */
+    public static Wear fromSkinName(String skinName) {
+        if (skinName == null || skinName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Skin name cannot be null or empty");
+        }
+
+        // Extract text between parentheses
+        int openParen = skinName.lastIndexOf('(');
+        int closeParen = skinName.lastIndexOf(')');
+
+        if (openParen == -1 || closeParen == -1 || openParen >= closeParen) {
+            throw new IllegalArgumentException(
+                    "Cannot extract wear from skin name: " + skinName + " (no parentheses found)"
+            );
+        }
+
+        String wearText = skinName.substring(openParen + 1, closeParen).trim();
+
+        // Map wear text to enum
+        return fromDisplayName(wearText);
+    }
+
+    /**
+     * Maps display name text to Wear enum
+     * Case-insensitive matching
+     *
+     * @param displayName The wear display name (e.g., "Factory New", "Field-Tested")
+     * @return The corresponding Wear category
+     * @throws IllegalArgumentException if display name doesn't match any wear
+     */
+    public static Wear fromDisplayName(String displayName) {
+        if (displayName == null || displayName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Display name cannot be null or empty");
+        }
+
+        String normalized = displayName.trim().toLowerCase().replace("-", " ");
+
+        for (Wear wear : values()) {
+            String wearNormalized = wear.displayName.toLowerCase().replace("-", " ");
+            if (wearNormalized.equals(normalized)) {
+                return wear;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Unknown wear display name: " + displayName +
+                ". Valid values: Factory New, Minimal Wear, Field-Tested, Well-Worn, Battle-Scarred"
+        );
+    }
 }

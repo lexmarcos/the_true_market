@@ -30,6 +30,9 @@ public class SkinMapper {
                 .paintSeed(skin.getPaintSeed())
                 .paintIndex(skin.getPaintIndex())
                 .stickerCount(skin.getStickerCount())
+                .price(skin.getPrice())
+                .currency(skin.getCurrency())
+                .marketSource(skin.getMarketSource())
                 .createdAt(skin.getCreatedAt())
                 .updatedAt(skin.getUpdatedAt())
                 .build();
@@ -55,6 +58,9 @@ public class SkinMapper {
                 .paintSeed(entity.getPaintSeed())
                 .paintIndex(entity.getPaintIndex())
                 .stickerCount(entity.getStickerCount())
+                .price(entity.getPrice())
+                .currency(entity.getCurrency())
+                .marketSource(entity.getMarketSource())
                 .stickers(null) // Stickers not persisted in current implementation
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

@@ -2,6 +2,7 @@ package com.thetruemarket.api.domain.repository;
 
 import com.thetruemarket.api.domain.model.Skin;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,4 +33,11 @@ public interface SkinRepository {
      * @return true if exists, false otherwise
      */
     boolean existsById(String id);
+
+    /**
+     * Retrieves all skins from the repository
+     *
+     * @return List of all skins
+     */
+    List<Skin> findAll();
 }

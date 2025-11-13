@@ -1,0 +1,212 @@
+{
+	"info": {
+		"_postman_id": "cs2-skin-market-api",
+		"name": "CS2 Skin Market Analysis API",
+		"description": "Collection of REST endpoints for the CS2 Skin Market Analysis API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "History Update Tasks",
+			"item": [
+				{
+					"name": "Get Pending Tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/history-update-tasks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"history-update-tasks"
+							]
+						},
+						"description": "Retrieves all pending (WAITING) history update tasks ordered by creation date (FIFO)"
+					},
+					"response": []
+				},
+				{
+					"name": "Complete History Update Task",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"skinName\": \"AK-47 | Redline\",\n  \"wear\": \"FIELD_TESTED\",\n  \"averagePrice\": 2500\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/history-update-tasks/:taskId/complete",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"history-update-tasks",
+								":taskId",
+								"complete"
+							],
+							"variable": [
+								{
+									"key": "taskId",
+									"value": "1",
+									"description": "The ID of the task to complete"
+								}
+							]
+						},
+						"description": "Completes a history update task by providing Steam price history data. Price should be in BRL cents and will be converted to USD."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing Steam price history update tasks"
+		},
+		{
+			"name": "Profitable Skins",
+			"item": [
+				{
+					"name": "Get All Profitable Skins",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/skins/profitable",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"skins",
+								"profitable"
+							]
+						},
+						"description": "Retrieves all skins with profit analysis. Returns skins sorted by profit percentage (highest first)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profitable Skins with Min Profit Filter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/skins/profitable?minProfit=20&maxResults=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"skins",
+								"profitable"
+							],
+							"query": [
+								{
+									"key": "minProfit",
+									"value": "20",
+									"description": "Minimum profit percentage (e.g., 20 = 20%)"
+								},
+								{
+									"key": "maxResults",
+									"value": "10",
+									"description": "Maximum number of results to return"
+								}
+							]
+						},
+						"description": "Retrieves skins with at least 20% profit, limited to 10 results."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profitable Skins Sorted by Discount",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/skins/profitable?sortBy=discount&order=desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"skins",
+								"profitable"
+							],
+							"query": [
+								{
+									"key": "sortBy",
+									"value": "discount",
+									"description": "Sort by: profit, discount, or gain"
+								},
+								{
+									"key": "order",
+									"value": "desc",
+									"description": "Sort order: asc or desc"
+								}
+							]
+						},
+						"description": "Retrieves skins sorted by discount percentage (highest discount first)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profitable Skins Sorted by Expected Gain",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/skins/profitable?sortBy=gain&order=desc&maxResults=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"skins",
+								"profitable"
+							],
+							"query": [
+								{
+									"key": "sortBy",
+									"value": "gain",
+									"description": "Sort by expected gain in USD cents"
+								},
+								{
+									"key": "order",
+									"value": "desc",
+									"description": "Sort order: asc or desc"
+								},
+								{
+									"key": "maxResults",
+									"value": "20",
+									"description": "Limit to top 20 results"
+								}
+							]
+						},
+						"description": "Retrieves top 20 skins sorted by expected gain in USD (highest gain first)."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for analyzing skin profitability based on Steam prices"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
