@@ -3,6 +3,8 @@ import { browserService } from './services/browser.service';
 import { steamAuthService } from './services/steam-auth.service';
 import { steamHistoryService } from './services/steam-history.service';
 import { apiService } from './services/api.service';
+import { SteamItemNameIdService } from './services/steam-item-nameid.service';
+import { SteamBuyOrdersService } from './services/steam-buy-orders.service';
 import { config } from './config/config';
 import logger, { createLogger } from './utils/logger';
 
@@ -14,6 +16,13 @@ const appLogger = createLogger('App');
 class SteamPriceCollector {
   private isRunning = false;
   private page: Page | null = null;
+  private itemNameIdService: SteamItemNameIdService;
+  private buyOrdersService: SteamBuyOrdersService;
+
+  constructor() {
+    this.itemNameIdService = new SteamItemNameIdService();
+    this.buyOrdersService = new SteamBuyOrdersService();
+  }
 
   /**
    * Initialize the collector
@@ -46,6 +55,10 @@ class SteamPriceCollector {
       if (!apiHealthy) {
         appLogger.warn('API health check failed - continuing anyway');
       }
+
+      // 5. Initialize item name ID service
+      await this.itemNameIdService.initialize();
+      appLogger.info('Item name ID service initialized successfully');
 
       appLogger.info('=== Initialization Complete ===');
     } catch (error) {
@@ -131,16 +144,44 @@ class SteamPriceCollector {
             continue;
           }
 
+          // Get last sale price
+          const lastSalePrice = steamHistoryService.getLastSalePrice(priceHistory);
+
+          if (lastSalePrice === null) {
+            appLogger.warn({ taskId: task.id }, 'Failed to get last sale price');
+            continue;
+          }
+
+          // Get item name ID for the skin
+          const itemNameId = await this.itemNameIdService.getItemNameId(task.skinName, task.wear);
+
+          if (itemNameId === null) {
+            appLogger.warn({ taskId: task.id, skinName: task.skinName, wear: task.wear }, 'Failed to get item name ID');
+            continue;
+          }
+
+          // Get lowest buy order price
+          const lowestBuyOrderPrice = await this.buyOrdersService.getLowestBuyOrder(itemNameId);
+
+          if (lowestBuyOrderPrice === null) {
+            appLogger.warn({ taskId: task.id, itemNameId }, 'Failed to get lowest buy order price');
+            continue;
+          }
+
           // Complete task via API
           const result = await apiService.completeHistoryTask(task.id, {
             skinName: task.skinName,
             wear: task.wear,
             averagePrice,
+            lastSalePrice,
+            lowestBuyOrderPrice,
           });
 
           appLogger.info({
             taskId: task.id,
             averagePrice,
+            lastSalePrice,
+            lowestBuyOrderPrice,
             success: result.success,
           }, 'Task completed successfully');
 

@@ -27,6 +27,8 @@ public class SteamPriceHistoryMapper {
                 .skinName(priceHistory.getSkinName())
                 .wear(priceHistory.getWear())
                 .averagePrice(priceHistory.getAveragePrice())
+                .lastSalePrice(priceHistory.getLastSalePrice())
+                .lowestBuyOrderPrice(priceHistory.getLowestBuyOrderPrice())
                 .recordedAt(priceHistory.getRecordedAt())
                 .createdAt(priceHistory.getCreatedAt())
                 .build();
@@ -49,6 +51,8 @@ public class SteamPriceHistoryMapper {
                 .skinName(entity.getSkinName())
                 .wear(entity.getWear())
                 .averagePrice(entity.getAveragePrice())
+                .lastSalePrice(entity.getLastSalePrice())
+                .lowestBuyOrderPrice(entity.getLowestBuyOrderPrice())
                 .recordedAt(entity.getRecordedAt())
                 .createdAt(entity.getCreatedAt())
                 .build();

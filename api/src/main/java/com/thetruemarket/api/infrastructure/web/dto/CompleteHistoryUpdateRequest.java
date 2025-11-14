@@ -33,4 +33,18 @@ public class CompleteHistoryUpdateRequest {
      * Required field, must be positive
      */
     private Long averagePrice;
+
+    /**
+     * Price of the last sale in BRL (Brazilian Reais, in cents)
+     * Will be automatically converted to USD before saving
+     * Required field, must be positive
+     */
+    private Long lastSalePrice;
+
+    /**
+     * Price of the lowest buy order in USD (cents)
+     * Already in USD, no conversion needed
+     * Required field, must be positive
+     */
+    private Long lowestBuyOrderPrice;
 }

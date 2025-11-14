@@ -112,27 +112,39 @@ public class GetProfitableSkinsUseCase {
             if (historyOpt.isPresent()) {
                 SteamPriceHistory history = historyOpt.get();
                 Long steamPrice = history.getAveragePrice();
+                Long lastSalePrice = history.getLastSalePrice();
+                Long lowestBuyOrderPrice = history.getLowestBuyOrderPrice();
 
                 try {
-                    // All prices are now in USD, no need to pass currency
+                    // Calculate profit with all available price points
                     ProfitResult profitResult = profitCalculationService.calculateProfit(
                             skin.getPrice(),
-                            steamPrice
+                            steamPrice,
+                            lastSalePrice,
+                            lowestBuyOrderPrice
                     );
 
                     builder.steamAveragePrice(steamPrice)
+                            .lastSalePrice(lastSalePrice)
+                            .lowestBuyOrderPrice(lowestBuyOrderPrice)
                             .discountPercentage(profitResult.getDiscountPercentage())
                             .profitPercentage(profitResult.getProfitPercentage())
-                            .expectedGainUsd(profitResult.getExpectedGainCents());
+                            .expectedGainUsd(profitResult.getExpectedGainCents())
+                            .profitPercentageVsLastSale(profitResult.getProfitPercentageVsLastSale())
+                            .profitPercentageVsLowestBuyOrder(profitResult.getProfitPercentageVsLowestBuyOrder());
 
-                    log.debug("Calculated profit for skin {}: profit={}%, gain={} cents",
+                    log.debug("Calculated profit for skin {}: profit={}%, profitVsLastSale={}%, profitVsLowestBuyOrder={}%, gain={} cents",
                             skin.getId(),
                             String.format("%.2f", profitResult.getProfitPercentage()),
+                            profitResult.getProfitPercentageVsLastSale() != null ? String.format("%.2f", profitResult.getProfitPercentageVsLastSale()) : "N/A",
+                            profitResult.getProfitPercentageVsLowestBuyOrder() != null ? String.format("%.2f", profitResult.getProfitPercentageVsLowestBuyOrder()) : "N/A",
                             profitResult.getExpectedGainCents());
                 } catch (IllegalArgumentException e) {
                     log.warn("Could not calculate profit for skin {}: {}", skin.getId(), e.getMessage());
-                    // Return analysis without profit data
-                    builder.steamAveragePrice(steamPrice);
+                    // Return analysis without profit data but with price information
+                    builder.steamAveragePrice(steamPrice)
+                            .lastSalePrice(lastSalePrice)
+                            .lowestBuyOrderPrice(lowestBuyOrderPrice);
                 }
             } else {
                 log.debug("No Steam price history found for skin {} ({} - {})",

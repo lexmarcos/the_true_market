@@ -33,8 +33,12 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
 - `marketSource` (string): marketplace de origem.
 - `steamAveragePrice` (number|null): preço médio da Steam em centavos USD.
 - `discountPercentage` (number|null): desconto relativo em pontos percentuais (ex.: `14.51`).
-- `profitPercentage` (number|null): lucro esperado após taxas, em pontos percentuais (ex.: `8.73`).
+- `profitPercentage` (number|null): lucro esperado após taxas baseado no preço médio da Steam, em pontos percentuais (ex.: `8.73`).
 - `expectedGainUsd` (number|null): ganho líquido previsto em centavos USD.
+- `lastSalePrice` (number|null): preço da última venda na Steam em centavos USD.
+- `lowestBuyOrderPrice` (number|null): preço da buy order mais barata na Steam em centavos USD.
+- `profitPercentageVsLastSale` (number|null): lucro esperado após taxas baseado no preço da última venda, em pontos percentuais (ex.: `10.25`).
+- `profitPercentageVsLowestBuyOrder` (number|null): lucro esperado após taxas baseado no preço da buy order mais barata, em pontos percentuais (ex.: `15.50`).
 - `hasHistory` (boolean): indica se havia histórico na Steam.
 - `lastUpdated` (string|null, ISO-8601): data da última atualização da skin no marketplace.
 
@@ -49,8 +53,12 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
     "marketCurrency": "BRL",
     "marketSource": "BITSKINS",
     "steamAveragePrice": 28999,
+    "lastSalePrice": 27500,
+    "lowestBuyOrderPrice": 26000,
     "discountPercentage": 45.62,
     "profitPercentage": 18.37,
+    "profitPercentageVsLastSale": 12.25,
+    "profitPercentageVsLowestBuyOrder": 8.50,
     "expectedGainUsd": 530,
     "hasHistory": true,
     "lastUpdated": "2025-11-11T20:14:55"
@@ -63,8 +71,12 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
     "marketCurrency": "USD",
     "marketSource": "DASHSKINS",
     "steamAveragePrice": null,
+    "lastSalePrice": null,
+    "lowestBuyOrderPrice": null,
     "discountPercentage": null,
     "profitPercentage": null,
+    "profitPercentageVsLastSale": null,
+    "profitPercentageVsLowestBuyOrder": null,
     "expectedGainUsd": null,
     "hasHistory": false,
     "lastUpdated": "2025-11-10T09:02:17"
@@ -75,4 +87,7 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
 ## Considerações
 - Quando não existe histórico na Steam, os campos de lucro retornam `null`, mas a skin ainda aparece para que o bot registre a ausência.
 - Valores de porcentagem são pontos percentuais (ex.: `14.51` = 14,51%).
+- Os campos `profitPercentageVsLastSale` e `profitPercentageVsLowestBuyOrder` podem ser `null` mesmo quando há histórico, caso esses preços específicos não estejam disponíveis.
+- Todos os preços (`steamAveragePrice`, `lastSalePrice`, `lowestBuyOrderPrice`) são retornados em centavos USD.
+- As porcentagens de profit já consideram a taxa de 15% da Steam.
 - Erros inesperados no cálculo são propagados; monitore logs caso receba 5xx.

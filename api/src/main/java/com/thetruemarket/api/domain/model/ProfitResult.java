@@ -43,4 +43,28 @@ public class ProfitResult {
      * Steam average price in USD cents
      */
     private Long steamPriceUsd;
+
+    /**
+     * Last sale price in USD cents
+     */
+    private Long lastSalePrice;
+
+    /**
+     * Lowest buy order price in USD cents
+     */
+    private Long lowestBuyOrderPrice;
+
+    /**
+     * Net profit percentage compared to last sale price after Steam's 15% fee
+     * Formula: ((lastSalePrice - marketPrice) / lastSalePrice - 15%) × 100
+     * Example: 873 represents 8.73%
+     */
+    private Double profitPercentageVsLastSale;
+
+    /**
+     * Net profit percentage compared to lowest buy order price after Steam's 15% fee
+     * Formula: ((lowestBuyOrderPrice - marketPrice) / lowestBuyOrderPrice - 15%) × 100
+     * Example: 1250 represents 12.50%
+     */
+    private Double profitPercentageVsLowestBuyOrder;
 }

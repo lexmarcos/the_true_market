@@ -53,7 +53,7 @@ public class HistoryUpdateTaskController {
      * Completes a history update task by providing the Steam price history data
      *
      * @param taskId The task ID to complete
-     * @param request The request body containing skin name, wear, and average price
+     * @param request The request body containing skin name, wear, prices (average, last sale, lowest buy order)
      * @return Success response
      */
     @PostMapping("/{taskId}/complete")
@@ -68,7 +68,9 @@ public class HistoryUpdateTaskController {
                     taskId,
                     request.getSkinName(),
                     request.getWear(),
-                    request.getAveragePrice()
+                    request.getAveragePrice(),
+                    request.getLastSalePrice(),
+                    request.getLowestBuyOrderPrice()
             );
 
             CompleteHistoryUpdateResponse response = CompleteHistoryUpdateResponse.success(

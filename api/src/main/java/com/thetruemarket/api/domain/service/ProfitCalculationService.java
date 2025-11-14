@@ -10,12 +10,14 @@ import com.thetruemarket.api.domain.model.ProfitResult;
 public interface ProfitCalculationService {
     /**
      * Calculates profit metrics for a skin based on market and Steam prices
-     * Both prices must be in USD cents
+     * All prices must be in USD cents
      *
      * @param marketPriceUsd The market price in USD cents
      * @param steamPriceUsd The Steam average price in USD cents
+     * @param lastSalePrice The last sale price in USD cents (nullable)
+     * @param lowestBuyOrderPrice The lowest buy order price in USD cents (nullable)
      * @return ProfitResult containing discount, profit, and expected gain
      * @throws IllegalArgumentException if prices are invalid
      */
-    ProfitResult calculateProfit(Long marketPriceUsd, Long steamPriceUsd);
+    ProfitResult calculateProfit(Long marketPriceUsd, Long steamPriceUsd, Long lastSalePrice, Long lowestBuyOrderPrice);
 }

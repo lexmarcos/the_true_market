@@ -27,16 +27,19 @@ public class CompleteHistoryUpdateTaskUseCase {
 
     /**
      * Completes a history update task by saving the price history and marking task as completed
-     * Converts price from BRL to USD before saving
+     * Converts prices from BRL to USD where needed
      *
      * @param taskId The task ID
      * @param skinName The skin name
      * @param wear The wear category
      * @param averagePriceInBrl The average price from Steam sales in BRL (cents)
+     * @param lastSalePriceInBrl The price of the last sale in BRL (cents)
+     * @param lowestBuyOrderPriceInUsd The price of the lowest buy order in USD (cents)
      * @throws IllegalArgumentException if task not found or skin name/wear mismatch
      */
     @Transactional
-    public void execute(Long taskId, String skinName, Wear wear, Long averagePriceInBrl) {
+    public void execute(Long taskId, String skinName, Wear wear, Long averagePriceInBrl,
+                       Long lastSalePriceInBrl, Long lowestBuyOrderPriceInUsd) {
         // Find the task
         HistoryUpdateTask task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found with ID: " + taskId));
@@ -56,23 +59,27 @@ public class CompleteHistoryUpdateTaskUseCase {
             );
         }
 
-        // Convert price from BRL to USD
+        // Convert prices from BRL to USD
         Long averagePriceInUsd = currencyConversionService.convertBrlToUsd(averagePriceInBrl);
+        Long lastSalePriceInUsd = currencyConversionService.convertBrlToUsd(lastSalePriceInBrl);
+        // lowestBuyOrderPriceInUsd already comes in USD, no conversion needed
 
-        log.info("Converted price for {} ({}): {} BRL cents -> {} USD cents",
-                skinName, wear, averagePriceInBrl, averagePriceInUsd);
+        log.info("Converted prices for {} ({}): avgPrice {} BRL -> {} USD, lastSale {} BRL -> {} USD, lowestBuyOrder {} USD",
+                skinName, wear, averagePriceInBrl, averagePriceInUsd, lastSalePriceInBrl, lastSalePriceInUsd, lowestBuyOrderPriceInUsd);
 
-        // Save price history (in USD)
+        // Save price history (all prices in USD)
         SteamPriceHistory priceHistory = SteamPriceHistory.create(
                 null, // skinId is optional for now
                 skinName,
                 wear,
-                averagePriceInUsd
+                averagePriceInUsd,
+                lastSalePriceInUsd,
+                lowestBuyOrderPriceInUsd
         );
         priceHistoryRepository.save(priceHistory);
 
-        log.info("Saved price history for {} ({}) - Average price: {} USD cents (original: {} BRL cents)",
-                skinName, wear, averagePriceInUsd, averagePriceInBrl);
+        log.info("Saved price history for {} ({}) - Avg: {} USD, LastSale: {} USD, LowestBuyOrder: {} USD",
+                skinName, wear, averagePriceInUsd, lastSalePriceInUsd, lowestBuyOrderPriceInUsd);
 
         // Mark task as completed
         task.complete();

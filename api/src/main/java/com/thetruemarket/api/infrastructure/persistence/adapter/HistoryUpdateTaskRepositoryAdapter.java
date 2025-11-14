@@ -10,6 +10,7 @@ import com.thetruemarket.api.infrastructure.persistence.repository.HistoryUpdate
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,5 +48,17 @@ public class HistoryUpdateTaskRepositoryAdapter implements HistoryUpdateTaskRepo
     @Override
     public boolean existsBySkinNameAndWearAndStatus(String skinName, Wear wear, TaskStatus status) {
         return jpaRepository.existsBySkinNameAndWearAndStatus(skinName, wear, status);
+    }
+
+    @Override
+    public List<HistoryUpdateTask> findByStatusAndFinishedAtBefore(TaskStatus status, LocalDateTime finishedBefore) {
+        return jpaRepository.findByStatusAndFinishedAtBefore(status, finishedBefore).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteByStatusAndFinishedAtBefore(TaskStatus status, LocalDateTime finishedBefore) {
+        jpaRepository.deleteByStatusAndFinishedAtBefore(status, finishedBefore);
     }
 }

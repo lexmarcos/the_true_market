@@ -118,4 +118,6 @@ export interface CompleteTaskPayload {
   skinName: string;
   wear: string;
   averagePrice: number;
+  lastSalePrice: number;
+  lowestBuyOrderPrice: number;
 }

@@ -76,6 +76,28 @@ public class ProfitableSkinResponse {
     private Long expectedGainUsd;
 
     /**
+     * Last sale price in USD cents
+     */
+    private Long lastSalePrice;
+
+    /**
+     * Lowest buy order price in USD cents
+     */
+    private Long lowestBuyOrderPrice;
+
+    /**
+     * Net profit percentage compared to last sale price after Steam's 15% fee
+     * Example: 873 represents 8.73%
+     */
+    private Double profitPercentageVsLastSale;
+
+    /**
+     * Net profit percentage compared to lowest buy order price after Steam's 15% fee
+     * Example: 1250 represents 12.50%
+     */
+    private Double profitPercentageVsLowestBuyOrder;
+
+    /**
      * Whether Steam price history exists for this skin
      */
     private Boolean hasHistory;
@@ -104,6 +126,10 @@ public class ProfitableSkinResponse {
                 .discountPercentage(profitAnalysis.getDiscountPercentage())
                 .profitPercentage(profitAnalysis.getProfitPercentage())
                 .expectedGainUsd(profitAnalysis.getExpectedGainUsd())
+                .lastSalePrice(profitAnalysis.getLastSalePrice())
+                .lowestBuyOrderPrice(profitAnalysis.getLowestBuyOrderPrice())
+                .profitPercentageVsLastSale(profitAnalysis.getProfitPercentageVsLastSale())
+                .profitPercentageVsLowestBuyOrder(profitAnalysis.getProfitPercentageVsLowestBuyOrder())
                 .hasHistory(profitAnalysis.getHasHistory())
                 .lastUpdated(profitAnalysis.getLastUpdated())
                 .build();

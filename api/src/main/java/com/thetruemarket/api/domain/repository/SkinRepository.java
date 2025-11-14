@@ -1,6 +1,8 @@
 package com.thetruemarket.api.domain.repository;
 
 import com.thetruemarket.api.domain.model.Skin;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,4 +42,12 @@ public interface SkinRepository {
      * @return List of all skins
      */
     List<Skin> findAll();
+
+    /**
+     * Retrieves skins from the repository with pagination support
+     *
+     * @param pageable Pagination information (page number, size, sort)
+     * @return Page of skins
+     */
+    Page<Skin> findAll(Pageable pageable);
 }

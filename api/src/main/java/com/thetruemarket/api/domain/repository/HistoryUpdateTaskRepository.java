@@ -4,6 +4,7 @@ import com.thetruemarket.api.domain.model.HistoryUpdateTask;
 import com.thetruemarket.api.domain.valueobject.TaskStatus;
 import com.thetruemarket.api.domain.valueobject.Wear;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,8 +41,25 @@ public interface HistoryUpdateTaskRepository {
      * Checks if a waiting task already exists for a skin name and wear combination
      *
      * @param skinName The skin name
-     * @param wear The wear category
+     * @param wear     The wear category
      * @return true if a waiting task exists, false otherwise
      */
     boolean existsBySkinNameAndWearAndStatus(String skinName, Wear wear, TaskStatus status);
+
+    /**
+     * Finds all tasks with a specific status and finished before a given date
+     *
+     * @param status         The status to filter by
+     * @param finishedBefore The date threshold for finished_at
+     * @return List of tasks matching the criteria
+     */
+    List<HistoryUpdateTask> findByStatusAndFinishedAtBefore(TaskStatus status, LocalDateTime finishedBefore);
+
+    /**
+     * Deletes all tasks with a specific status and finished before a given date
+     *
+     * @param status         The status to filter by
+     * @param finishedBefore The date threshold for finished_at
+     */
+    void deleteByStatusAndFinishedAtBefore(TaskStatus status, LocalDateTime finishedBefore);
 }

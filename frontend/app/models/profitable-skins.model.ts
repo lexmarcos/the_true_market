@@ -105,10 +105,42 @@ export function useProfitableSkins(
         skin.discountPercentage
       );
 
+      // Determine badge variants for profit vs last sale and lowest buy order
+      const profitVsLastSaleBadgeVariant = determineProfitBadgeVariant(
+        skin.profitPercentageVsLastSale
+      );
+
+      const profitVsLowestBuyOrderBadgeVariant = determineProfitBadgeVariant(
+        skin.profitPercentageVsLowestBuyOrder
+      );
+
+      // Calculate expected gains for last sale and lowest buy order
+      const expectedGainVsLastSaleUsd = calculateExpectedGain(
+        skin.marketPrice,
+        skin.marketCurrency,
+        skin.lastSalePrice
+      );
+
+      const expectedGainVsLowestBuyOrderUsd = calculateExpectedGain(
+        skin.marketPrice,
+        skin.marketCurrency,
+        skin.lowestBuyOrderPrice
+      );
+
       // Determine if it's a gain or loss
       const isGain = (skin.expectedGainUsd ?? 0) >= 0;
       const expectedGainLabel = isGain ? "Ganho esperado" : "Perda esperada";
       const expectedGainColorClass = isGain
+        ? "text-green-600 dark:text-green-400"
+        : "text-red-600 dark:text-red-400";
+
+      const isGainVsLastSale = (expectedGainVsLastSaleUsd ?? 0) >= 0;
+      const expectedGainVsLastSaleColorClass = isGainVsLastSale
+        ? "text-green-600 dark:text-green-400"
+        : "text-red-600 dark:text-red-400";
+
+      const isGainVsLowestBuyOrder = (expectedGainVsLowestBuyOrderUsd ?? 0) >= 0;
+      const expectedGainVsLowestBuyOrderColorClass = isGainVsLowestBuyOrder
         ? "text-green-600 dark:text-green-400"
         : "text-red-600 dark:text-red-400";
 
@@ -124,15 +156,25 @@ export function useProfitableSkins(
         marketSource: skin.marketSource,
         marketSourceDisplay: formatMarketSource(skin.marketSource),
         steamAveragePrice: formatCurrency(skin.steamAveragePrice, "USD"),
+        lastSalePrice: formatCurrency(skin.lastSalePrice, "USD"),
+        lowestBuyOrderPrice: formatCurrency(skin.lowestBuyOrderPrice, "USD"),
         discountPercentage: formatPercentage(skin.discountPercentage),
         profitPercentage: formatPercentage(skin.profitPercentage),
+        profitPercentageVsLastSale: formatPercentage(skin.profitPercentageVsLastSale),
+        profitPercentageVsLowestBuyOrder: formatPercentage(skin.profitPercentageVsLowestBuyOrder),
         expectedGainUsd: formatCurrency(skin.expectedGainUsd, "USD"),
+        expectedGainVsLastSale: formatCurrency(expectedGainVsLastSaleUsd, "USD"),
+        expectedGainVsLowestBuyOrder: formatCurrency(expectedGainVsLowestBuyOrderUsd, "USD"),
         expectedGainLabel,
         expectedGainColorClass,
+        expectedGainVsLastSaleColorClass,
+        expectedGainVsLowestBuyOrderColorClass,
         hasHistory: skin.hasHistory,
         lastUpdated: formatDate(skin.lastUpdated),
         lastUpdatedRelative: formatRelativeTime(skin.lastUpdated),
         profitBadgeVariant,
+        profitVsLastSaleBadgeVariant,
+        profitVsLowestBuyOrderBadgeVariant,
         discountBadgeVariant,
         link: skin.link,
         steamMarketLink,
@@ -159,6 +201,42 @@ export function useProfitableSkins(
     totalCount,
     hasProfitableSkins,
   };
+}
+
+/**
+ * Calculate expected gain between market price and Steam price
+ * Applies Steam's 15% fee to the Steam price
+ * @param marketPrice - Market price in cents
+ * @param marketCurrency - Currency of the market price
+ * @param steamPrice - Steam price in cents USD
+ * @returns Expected gain in cents USD, or null if calculation not possible
+ */
+function calculateExpectedGain(
+  marketPrice: number,
+  marketCurrency: string,
+  steamPrice: number | null
+): number | null {
+  if (steamPrice === null) {
+    return null;
+  }
+
+  // Convert market price to USD cents if needed
+  let marketPriceUsd = marketPrice;
+  
+  // Simple conversion rates (ideally would come from API)
+  // For now, assuming BRL to USD conversion ~ 5:1
+  if (marketCurrency === "BRL") {
+    marketPriceUsd = Math.round(marketPrice / 5);
+  } else if (marketCurrency === "EUR") {
+    marketPriceUsd = Math.round(marketPrice * 1.1);
+  }
+  // USD stays as is
+
+  // Calculate Steam price after 15% fee (seller receives 85%)
+  const steamPriceAfterFee = Math.round(steamPrice * 0.85);
+
+  // Expected gain = what you'd receive on Steam - what you paid on market
+  return steamPriceAfterFee - marketPriceUsd;
 }
 
 /**

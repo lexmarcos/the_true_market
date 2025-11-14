@@ -57,6 +57,18 @@ public class SteamPriceHistoryEntity {
     private Long averagePrice;
 
     /**
+     * Price of the last sale in USD (cents)
+     */
+    @Column(name = "last_sale_price", nullable = false)
+    private Long lastSalePrice;
+
+    /**
+     * Price of the lowest buy order in USD (cents)
+     */
+    @Column(name = "lowest_buy_order_price", nullable = false)
+    private Long lowestBuyOrderPrice;
+
+    /**
      * When this price data was recorded
      */
     @Column(name = "recorded_at", nullable = false)

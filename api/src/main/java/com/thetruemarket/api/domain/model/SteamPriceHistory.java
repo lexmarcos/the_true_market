@@ -43,6 +43,16 @@ public class SteamPriceHistory {
     private Long averagePrice;
 
     /**
+     * Price of the last sale in USD (cents)
+     */
+    private Long lastSalePrice;
+
+    /**
+     * Price of the lowest buy order in USD (cents)
+     */
+    private Long lowestBuyOrderPrice;
+
+    /**
      * When this price data was recorded
      */
     private LocalDateTime recordedAt;
@@ -55,7 +65,8 @@ public class SteamPriceHistory {
     /**
      * Creates a new price history record
      */
-    public static SteamPriceHistory create(String skinId, String skinName, Wear wear, Long averagePrice) {
+    public static SteamPriceHistory create(String skinId, String skinName, Wear wear, Long averagePrice,
+                                          Long lastSalePrice, Long lowestBuyOrderPrice) {
         LocalDateTime now = LocalDateTime.now();
 
         return SteamPriceHistory.builder()
@@ -63,6 +74,8 @@ public class SteamPriceHistory {
                 .skinName(skinName)
                 .wear(wear)
                 .averagePrice(averagePrice)
+                .lastSalePrice(lastSalePrice)
+                .lowestBuyOrderPrice(lowestBuyOrderPrice)
                 .recordedAt(now)
                 .createdAt(now)
                 .build();

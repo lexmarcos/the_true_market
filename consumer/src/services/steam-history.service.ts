@@ -127,6 +127,36 @@ export class SteamHistoryService {
   }
 
   /**
+   * Get the last sale price (most recent price in history)
+   */
+  getLastSalePrice(priceHistory: SteamPriceHistory): number | null {
+    try {
+      if (!priceHistory.prices || priceHistory.prices.length === 0) {
+        logger.warn('Price history is empty, cannot get last sale price');
+        return null;
+      }
+
+      // Get the last price entry (most recent)
+      const lastEntry = priceHistory.prices[priceHistory.prices.length - 1];
+      const lastPrice = lastEntry[1]; // Index [1] contains the price
+
+      // Convert to cents (multiply by 100) and round to integer
+      const lastPriceInCents = Math.round(lastPrice * 100);
+
+      logger.info({
+        lastPrice,
+        lastPriceInCents,
+        date: lastEntry[0]
+      }, 'Last sale price extracted');
+
+      return lastPriceInCents;
+    } catch (error) {
+      logger.error({ error }, 'Error getting last sale price');
+      return null;
+    }
+  }
+
+  /**
    * Delay helper
    */
   private delay(ms: number): Promise<void> {

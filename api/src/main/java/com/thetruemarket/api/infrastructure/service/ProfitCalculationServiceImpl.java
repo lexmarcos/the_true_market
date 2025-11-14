@@ -19,7 +19,7 @@ public class ProfitCalculationServiceImpl implements ProfitCalculationService {
     private static final double STEAM_FEE_PERCENTAGE = 15.0;
 
     @Override
-    public ProfitResult calculateProfit(Long marketPriceUsd, Long steamPriceUsd) {
+    public ProfitResult calculateProfit(Long marketPriceUsd, Long steamPriceUsd, Long lastSalePrice, Long lowestBuyOrderPrice) {
         if (marketPriceUsd == null || marketPriceUsd <= 0) {
             throw new IllegalArgumentException("Market price must be positive");
         }
@@ -28,10 +28,10 @@ public class ProfitCalculationServiceImpl implements ProfitCalculationService {
             throw new IllegalArgumentException("Steam price must be positive");
         }
 
-        // Step 1: Calculate discount percentage
-        // Formula: ((steamPrice - marketPrice) / steamPrice) × 100
-        BigDecimal steam = BigDecimal.valueOf(steamPriceUsd);
         BigDecimal market = BigDecimal.valueOf(marketPriceUsd);
+
+        // Step 1: Calculate discount and profit percentage based on Steam average price
+        BigDecimal steam = BigDecimal.valueOf(steamPriceUsd);
         BigDecimal discount = steam.subtract(market)
                 .divide(steam, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
@@ -57,9 +57,24 @@ public class ProfitCalculationServiceImpl implements ProfitCalculationService {
 
         Long expectedGainCents = expectedGain.longValue();
 
-        log.debug("Profit calculation: market={} USD, steam={} USD, discount={} bp, profit={} bp, gain={} cents",
+        // Step 4: Calculate profit percentage vs last sale price (if available)
+        Double profitPercentageVsLastSale = null;
+        if (lastSalePrice != null && lastSalePrice > 0) {
+            profitPercentageVsLastSale = calculateProfitPercentage(market, BigDecimal.valueOf(lastSalePrice));
+        }
+
+        // Step 5: Calculate profit percentage vs lowest buy order price (if available)
+        Double profitPercentageVsLowestBuyOrder = null;
+        if (lowestBuyOrderPrice != null && lowestBuyOrderPrice > 0) {
+            profitPercentageVsLowestBuyOrder = calculateProfitPercentage(market, BigDecimal.valueOf(lowestBuyOrderPrice));
+        }
+
+        log.debug("Profit calculation: market={} USD, steam={} USD, discount={} bp, profit={} bp, gain={} cents, " +
+                        "profitVsLastSale={} bp, profitVsLowestBuyOrder={} bp",
                 marketPriceUsd, steamPriceUsd, String.format("%.0f", discountPercentage),
-                String.format("%.0f", profitPercentage), expectedGainCents);
+                String.format("%.0f", profitPercentage), expectedGainCents,
+                profitPercentageVsLastSale != null ? String.format("%.0f", profitPercentageVsLastSale) : "N/A",
+                profitPercentageVsLowestBuyOrder != null ? String.format("%.0f", profitPercentageVsLowestBuyOrder) : "N/A");
 
         return ProfitResult.builder()
                 .discountPercentage(discountPercentage)
@@ -67,6 +82,32 @@ public class ProfitCalculationServiceImpl implements ProfitCalculationService {
                 .expectedGainCents(expectedGainCents)
                 .marketPriceUsd(marketPriceUsd)
                 .steamPriceUsd(steamPriceUsd)
+                .lastSalePrice(lastSalePrice)
+                .lowestBuyOrderPrice(lowestBuyOrderPrice)
+                .profitPercentageVsLastSale(profitPercentageVsLastSale)
+                .profitPercentageVsLowestBuyOrder(profitPercentageVsLowestBuyOrder)
                 .build();
+    }
+
+    /**
+     * Calculates profit percentage for a given reference price
+     * Formula: ((referencePrice - marketPrice) / referencePrice - 15%) × 100 × 100 (in basis points)
+     *
+     * @param marketPrice Market price in USD cents
+     * @param referencePrice Reference price (last sale or lowest buy order) in USD cents
+     * @return Profit percentage in basis points
+     */
+    private Double calculateProfitPercentage(BigDecimal marketPrice, BigDecimal referencePrice) {
+        // Calculate discount percentage
+        BigDecimal discount = referencePrice.subtract(marketPrice)
+                .divide(referencePrice, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+
+        // Calculate net profit (discount - Steam's 15% fee)
+        BigDecimal profitBp = discount.subtract(BigDecimal.valueOf(STEAM_FEE_PERCENTAGE))
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.HALF_UP);
+
+        return profitBp.doubleValue();
     }
 }

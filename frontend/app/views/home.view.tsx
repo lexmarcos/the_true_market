@@ -174,73 +174,154 @@ export function HomeView({
             {skins.map((skin) => (
               <Card
                 key={skin.skinId}
-                className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-slate-200 dark:border-slate-700"
+                className="overflow-hidden border-0 bg-white/95 dark:bg-slate-900/60 shadow-xl ring-1 ring-slate-200/80 dark:ring-slate-800/70 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
               >
-                <CardHeader className="pb-4">
-                  <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 line-clamp-2">
-                    {skin.skinName}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {skin.wearDisplay}
-                  </p>
+                <CardHeader className="pb-0 space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                        Destaque da semana
+                      </p>
+                      <h3 className="mt-2 font-semibold text-xl text-slate-900 dark:text-slate-100 leading-snug">
+                        {skin.skinName}
+                      </h3>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200 px-3 py-1 text-xs font-semibold border border-emerald-100/80 dark:border-emerald-400/30">
+                      {skin.wearDisplay}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Oportunidade monitorada
+                  </div>
                 </CardHeader>
 
-                <CardContent className="space-y-3">
-                  {/* Market Info */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {skin.marketSourceDisplay}
-                    </span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {skin.marketPrice}
-                    </span>
-                  </div>
-
-                  {/* Steam Price */}
-                  {skin.hasHistory && (
+                <CardContent className="space-y-5 px-5 pb-5 pt-4">
+                  <section className="rounded-2xl border border-slate-100/80 dark:border-slate-800/70 bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        Steam
-                      </span>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {skin.steamAveragePrice}
-                      </span>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                          Oferta no marketplace
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {skin.marketSourceDisplay}
+                        </p>
+                      </div>
+                      <p className="text-3xl font-semibold text-slate-900 dark:text-white">
+                        {skin.marketPrice}
+                      </p>
                     </div>
+                  </section>
+
+                  {skin.hasHistory && (
+                    <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/40 p-4 space-y-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
+                        Referências oficiais da Steam
+                      </p>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 p-3">
+                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            Média das últimas 10 vendas
+                          </p>
+                          <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                            {skin.steamAveragePrice}
+                          </p>
+                        </div>
+                        {skin.lastSalePrice !== "N/A" && (
+                          <div className="rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 p-3">
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Última venda registrada
+                            </p>
+                            <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                              {skin.lastSalePrice}
+                            </p>
+                          </div>
+                        )}
+                        {skin.lowestBuyOrderPrice !== "N/A" && (
+                          <div className="rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 p-3 sm:col-span-2">
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Menor ordem de compra ativa
+                            </p>
+                            <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                              {skin.lowestBuyOrderPrice}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
                   )}
 
-                  {/* Badges */}
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge variant={skin.profitBadgeVariant} className="text-xs">
-                      Lucro: {skin.profitPercentage}
-                    </Badge>
-                    <Badge variant={skin.discountBadgeVariant} className="text-xs">
-                      Desc: {skin.discountPercentage}
-                    </Badge>
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                      Indicadores rápidos
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={skin.profitBadgeVariant} className="text-[11px] font-semibold tracking-tight px-3 py-1">
+                        Margem média Steam · {skin.profitPercentage}
+                      </Badge>
+                      {skin.hasHistory && skin.profitPercentageVsLastSale !== "N/A" && (
+                        <Badge variant={skin.profitVsLastSaleBadgeVariant} className="text-[11px] font-semibold tracking-tight px-3 py-1">
+                          Margem última venda · {skin.profitPercentageVsLastSale}
+                        </Badge>
+                      )}
+                      {skin.hasHistory && skin.profitPercentageVsLowestBuyOrder !== "N/A" && (
+                        <Badge variant={skin.profitVsLowestBuyOrderBadgeVariant} className="text-[11px] font-semibold tracking-tight px-3 py-1">
+                          Margem menor ordem · {skin.profitPercentageVsLowestBuyOrder}
+                        </Badge>
+                      )}
+                      <Badge variant={skin.discountBadgeVariant} className="text-[11px] font-semibold tracking-tight px-3 py-1">
+                        Desconto marketplace · {skin.discountPercentage}
+                      </Badge>
+                    </div>
                   </div>
 
-                  {/* Expected Gain/Loss */}
                   {skin.hasHistory && (
-                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {skin.expectedGainLabel}
-                        </span>
-                        <span className={`text-sm font-semibold ${skin.expectedGainColorClass}`}>
-                          {skin.expectedGainUsd}
-                        </span>
+                    <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800 p-4 space-y-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-700 dark:text-emerald-300">
+                        Projeção de ganho líquido
+                      </p>
+                      <div className="space-y-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            Ganho em relação à média das últimas 10 vendas na Steam
+                          </span>
+                          <span className={`text-xl font-semibold ${skin.expectedGainColorClass}`}>
+                            {skin.expectedGainUsd}
+                          </span>
+                        </div>
+                        {skin.expectedGainVsLastSale !== "N/A" && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                              Ganho em relação à última venda registrada na Steam
+                            </span>
+                            <span className={`text-xl font-semibold ${skin.expectedGainVsLastSaleColorClass}`}>
+                              {skin.expectedGainVsLastSale}
+                            </span>
+                          </div>
+                        )}
+                        {skin.expectedGainVsLowestBuyOrder !== "N/A" && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                              Ganho em relação à menor ordem de compra ativa na Steam
+                            </span>
+                            <span className={`text-xl font-semibold ${skin.expectedGainVsLowestBuyOrderColorClass}`}>
+                              {skin.expectedGainVsLowestBuyOrder}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </section>
                   )}
                 </CardContent>
 
-                <CardFooter className="bg-slate-50 dark:bg-slate-800/50 pt-3 pb-3 flex-col gap-3">
+                <CardFooter className="bg-gradient-to-r from-slate-50 via-indigo-50 to-purple-50 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-slate-900/60 border-t border-slate-100 dark:border-slate-800 pt-4 pb-4 flex-col gap-3">
                   {/* Action Buttons */}
                   <div className="flex gap-2 w-full">
                     <Button
                       asChild
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-2"
+                      className="flex-1 gap-2 border-slate-200/70 bg-white/80 hover:bg-white"
                     >
                       <a
                         href={skin.link}
@@ -255,7 +336,7 @@ export function HomeView({
                       asChild
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-2"
+                      className="flex-1 gap-2 border-slate-200/70 bg-white/80 hover:bg-white"
                     >
                       <a
                         href={skin.steamMarketLink}
@@ -269,7 +350,7 @@ export function HomeView({
                   </div>
 
                   {/* Last Updated */}
-                  <p className="text-xs text-slate-500 dark:text-slate-400 w-full text-center">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300 w-full text-center">
                     Atualizado {skin.lastUpdatedRelative}
                   </p>
                 </CardFooter>
