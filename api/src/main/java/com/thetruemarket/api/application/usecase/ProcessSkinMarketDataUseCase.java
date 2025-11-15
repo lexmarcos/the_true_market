@@ -82,7 +82,8 @@ public class ProcessSkinMarketDataUseCase {
                     priceInUsd,
                     finalCurrency,
                     skinMarketData.getStore(),
-                    skinMarketData.getLink()
+                    skinMarketData.getLink(),
+                    skinMarketData.getImageUrl()
             );
 
             saveSkinUseCase.execute(skin);

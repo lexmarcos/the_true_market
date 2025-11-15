@@ -34,6 +34,12 @@ public class ProfitableSkinResponse {
     private Wear wear;
 
     /**
+     * Float value in cents (× 10000)
+     * Example: 0.1234 becomes 1234, frontend divides by 10000 to get 0.1234
+     */
+    private Long floatValueCents;
+
+    /**
      * Market price in cents (original currency)
      */
     private Long marketPrice;
@@ -52,6 +58,11 @@ public class ProfitableSkinResponse {
      * Direct link to the item on the marketplace
      */
     private String link;
+
+    /**
+     * URL of the skin image
+     */
+    private String imageUrl;
 
     /**
      * Steam average price in USD cents
@@ -118,10 +129,12 @@ public class ProfitableSkinResponse {
                 .skinId(profitAnalysis.getSkinId())
                 .skinName(profitAnalysis.getSkinName())
                 .wear(profitAnalysis.getWear())
+                .floatValueCents(profitAnalysis.getFloatValueCents())
                 .marketPrice(profitAnalysis.getMarketPrice())
                 .marketCurrency(profitAnalysis.getMarketCurrency())
                 .marketSource(profitAnalysis.getMarketSource())
                 .link(profitAnalysis.getLink())
+                .imageUrl(profitAnalysis.getImageUrl())
                 .steamAveragePrice(profitAnalysis.getSteamAveragePrice())
                 .discountPercentage(profitAnalysis.getDiscountPercentage())
                 .profitPercentage(profitAnalysis.getProfitPercentage())

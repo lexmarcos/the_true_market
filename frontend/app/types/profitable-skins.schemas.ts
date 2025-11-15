@@ -7,6 +7,7 @@ export const profitableSkinSchema = z.object({
   skinId: z.string(),
   skinName: z.string(),
   wear: z.string(),
+  floatValueCents: z.number().nullable(),
   marketPrice: z.number(),
   marketCurrency: z.string(),
   marketSource: z.string(),

@@ -100,6 +100,23 @@ export function useProfitableSkins(
         skin.profitPercentage
       );
 
+      // Prefer explicit float value from API when available. API returns
+      // `floatValueCents` as integer where 0.1234 => 1234. Divide by 10000.
+      let wearValueNormalized: number | null = null;
+      let wearValueDisplay: string;
+
+      if (skin.floatValueCents !== null && skin.floatValueCents !== undefined) {
+        const floatVal = skin.floatValueCents / 10000;
+        wearValueNormalized = clampBetweenZeroAndOne(floatVal);
+        wearValueDisplay = floatVal.toFixed(4);
+      } else {
+        wearValueNormalized = getWearNormalizedValue(skin.wear);
+        wearValueDisplay =
+          wearValueNormalized !== null
+            ? wearValueNormalized.toFixed(3)
+            : formatWear(skin.wear);
+      }
+
       // Determine discount badge variant based on discount percentage
       const discountBadgeVariant = determineDiscountBadgeVariant(
         skin.discountPercentage
@@ -152,6 +169,8 @@ export function useProfitableSkins(
         skinName: skin.skinName,
         wear: skin.wear,
         wearDisplay: formatWear(skin.wear),
+        wearValueDisplay,
+        wearValueNormalized,
         marketPrice: formatCurrency(skin.marketPrice, skin.marketCurrency),
         marketSource: skin.marketSource,
         marketSourceDisplay: formatMarketSource(skin.marketSource),
@@ -302,4 +321,40 @@ function generateSteamMarketLink(skinName: string): string {
   const baseUrl = "https://steamcommunity.com/market/listings/730";
   const encodedName = encodeURIComponent(skinName);
   return `${baseUrl}/${encodedName}`;
+}
+
+function getWearNormalizedValue(wear: string): number | null {
+  const numericWear = Number(wear);
+  if (!Number.isNaN(numericWear)) {
+    return clampBetweenZeroAndOne(numericWear);
+  }
+
+  const wearMidpoints: Record<string, number> = {
+    FACTORY_NEW: 0.035,
+    MINIMAL_WEAR: 0.10,
+    FIELD_TESTED: 0.25,
+    WELL_WORN: 0.43,
+    BATTLE_SCARRED: 0.70,
+  };
+
+  const mappedValue = wearMidpoints[wear];
+  return typeof mappedValue === "number"
+    ? clampBetweenZeroAndOne(mappedValue)
+    : null;
+}
+
+function clampBetweenZeroAndOne(value: number): number {
+  if (Number.isNaN(value)) {
+    return 0.5;
+  }
+
+  if (value < 0) {
+    return 0;
+  }
+
+  if (value > 1) {
+    return 1;
+  }
+
+  return value;
 }

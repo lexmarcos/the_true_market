@@ -18,23 +18,27 @@ public class SaveSkinUseCase {
     private final SkinRepository skinRepository;
 
     /**
-     * Saves a skin if it doesn't already exist
+     * Saves or updates a skin
+     * Always performs save operation to update heartbeat timestamp (lastSeenAt)
+     * This enables the heartbeat-based cleanup strategy for sold skins
      *
-     * @param skin The skin to save
-     * @return The saved skin, or null if it already existed
+     * @param skin The skin to save or update
+     * @return The saved/updated skin
      */
     @Transactional
     public Skin execute(Skin skin) {
-        // Check if skin already exists by ID
-        if (skinRepository.existsById(skin.getId())) {
-            log.debug("Skin with ID {} already exists, skipping save", skin.getId());
-            return null;
-        }
+        boolean isExisting = skinRepository.existsById(skin.getId());
 
-        // Save the skin
+        // Always save (insert or update) to refresh heartbeat timestamp
         Skin savedSkin = skinRepository.save(skin);
-        log.info("Saved new skin: {} (ID: {}, Wear: {})",
-                savedSkin.getName(), savedSkin.getId(), savedSkin.getWear());
+
+        if (isExisting) {
+            log.debug("Updated existing skin heartbeat: {} (ID: {})",
+                    savedSkin.getName(), savedSkin.getId());
+        } else {
+            log.info("Saved new skin: {} (ID: {}, Wear: {})",
+                    savedSkin.getName(), savedSkin.getId(), savedSkin.getWear());
+        }
 
         return savedSkin;
     }

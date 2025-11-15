@@ -28,6 +28,7 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
 - `skinId` (string): identificador interno da skin.
 - `skinName` (string): nome completo.
 - `wear` (string): enum `Wear`.
+- `floatValueCents` (number|null): valor do float em cents (× 10000). Exemplo: `0.1234` vira `1234`; no frontend, dividir por 10000 para obter `0.1234`.
 - `marketPrice` (number): preço de venda listado (centavos na `marketCurrency`).
 - `marketCurrency` (string): moeda do preço de mercado (ex.: `USD`, `BRL`).
 - `marketSource` (string): marketplace de origem.
@@ -49,9 +50,11 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
     "skinId": "skin-001",
     "skinName": "AK-47 | Redline",
     "wear": "FIELD_TESTED",
+    "floatValueCents": 2567,
     "marketPrice": 157500,
     "marketCurrency": "BRL",
     "marketSource": "BITSKINS",
+    "link": "https://bitskins.com/item/123",
     "steamAveragePrice": 28999,
     "lastSalePrice": 27500,
     "lowestBuyOrderPrice": 26000,
@@ -67,9 +70,11 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
     "skinId": "skin-002",
     "skinName": "AWP | Asiimov",
     "wear": "BATTLE_SCARRED",
+    "floatValueCents": null,
     "marketPrice": 9550,
     "marketCurrency": "USD",
     "marketSource": "DASHSKINS",
+    "link": "https://dashskins.com/item/456",
     "steamAveragePrice": null,
     "lastSalePrice": null,
     "lowestBuyOrderPrice": null,
@@ -90,4 +95,5 @@ Lista JSON com objetos `ProfitableSkinResponse`. Campos principais:
 - Os campos `profitPercentageVsLastSale` e `profitPercentageVsLowestBuyOrder` podem ser `null` mesmo quando há histórico, caso esses preços específicos não estejam disponíveis.
 - Todos os preços (`steamAveragePrice`, `lastSalePrice`, `lowestBuyOrderPrice`) são retornados em centavos USD.
 - As porcentagens de profit já consideram a taxa de 15% da Steam.
+- O campo `floatValueCents` é `null` quando o float value não está disponível. Quando presente, divide por 10000 para obter o float original (ex.: `2567 ÷ 10000 = 0.2567`).
 - Erros inesperados no cálculo são propagados; monitore logs caso receba 5xx.

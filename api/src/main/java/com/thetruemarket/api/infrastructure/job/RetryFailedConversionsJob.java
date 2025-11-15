@@ -137,7 +137,8 @@ public class RetryFailedConversionsJob {
                     priceInUsd,
                     "USD",
                     skinMarketData.getStore(),
-                    skinMarketData.getLink()
+                    skinMarketData.getLink(),
+                    skinMarketData.getImageUrl()
             );
 
             saveSkinUseCase.execute(skin);

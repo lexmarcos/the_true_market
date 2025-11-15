@@ -10,8 +10,13 @@ import { HomeView } from "./views/home.view";
  */
 export default function Home() {
   // State for sorting parameters
-  const [sortBy, setSortBy] = useState<"profit" | "discount" | "gain">("profit");
+  const [sortBy, setSortBy] = useState<"profit" | "discount" | "gain">(
+    "profit"
+  );
   const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [activeIndicatorsSkinId, setActiveIndicatorsSkinId] = useState<
+    string | null
+  >(null);
 
   // Instantiate the Model hook
   const { skins, isLoading, error, refetch, totalCount, hasProfitableSkins } =
@@ -37,6 +42,9 @@ export default function Home() {
       order={order}
       onSortByChange={setSortBy}
       onOrderChange={setOrder}
+      activeIndicatorsSkinId={activeIndicatorsSkinId}
+      onIndicatorsOpen={setActiveIndicatorsSkinId}
+      onIndicatorsClose={() => setActiveIndicatorsSkinId(null)}
     />
   );
 }

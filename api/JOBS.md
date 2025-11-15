@@ -127,7 +127,112 @@ INFO  - UpdateSkinPricesJob completed: 23 tasks created, 51 skipped (no update n
 
 ---
 
-## 3. RetryFailedConversionsJob
+## 3. CleanupStaleSkinsJob
+
+**Purpose**: Marks skins as SOLD when they haven't been seen by bots for a configured duration, implementing a heartbeat-based cleanup strategy.
+
+**Schedule**: Every 30 minutes (default)
+
+**Strategy**: Heartbeat-based tracking
+- Every time a bot sees a skin in a marketplace, it sends a message → `lastSeenAt` timestamp is updated
+- This job periodically identifies AVAILABLE skins that haven't received heartbeat updates
+- Skins without heartbeat for configured hours are marked as SOLD
+- **Sold skins are preserved** in database for historical analysis (not deleted)
+
+### Configuration Properties
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `skin.cleanup.enabled` | `true` | Enable/disable the job |
+| `skin.cleanup.interval-ms` | `1800000` | Execution interval in milliseconds (30 minutes) |
+| `skin.cleanup.stale-hours` | `2` | Hours without heartbeat before marking as sold |
+
+### How It Works
+
+1. Calculates cutoff date: `current time - stale-hours`
+2. Queries database for skins with:
+   - `status = AVAILABLE`
+   - `lastSeenAt < cutoff date`
+3. Updates each matching skin:
+   - Sets `status = SOLD`
+   - Preserves all other data (price, market source, timestamps, etc.)
+4. Logs the number of skins marked as sold
+
+### Heartbeat Mechanism
+
+**Bot Behavior**:
+- Bot scrapes marketplace every X minutes
+- For each visible skin, sends RabbitMQ message
+- Even if skin already exists in DB, message is sent again (heartbeat)
+
+**API Behavior**:
+- `SaveSkinUseCase` always performs save operation (insert or update)
+- JPA `@PreUpdate` hook updates `lastSeenAt` timestamp
+- This refreshes the heartbeat every time bot sees the skin
+
+**Cleanup Logic**:
+- If bot stops seeing a skin (because it was sold), no more messages arrive
+- `lastSeenAt` timestamp becomes stale
+- After configured hours without heartbeat, this job marks it as SOLD
+
+### Dependencies
+
+- `MarkStaleSkinAsSoldUseCase`: Business logic for marking skins as sold
+  - `execute()` - Returns count of skins marked
+- `SkinRepository`: Queries and updates skins
+  - `findByStatusAndLastSeenAtBefore(SkinStatus, LocalDateTime)`
+  - `save(Skin)`
+
+### Conditional Execution
+
+The job only runs if:
+- `skin.cleanup.enabled=true` (or property not set, defaults to true)
+- Uses `@ConditionalOnProperty` for runtime control
+
+### Why Keep Sold Skins?
+
+Preserving sold skins (instead of deleting) enables:
+- **Market velocity analysis**: How long skins typically stay available
+- **Price trends**: Comparing sold prices vs current market prices
+- **Inventory turnover**: Understanding marketplace dynamics
+- **Historical data**: Future analytics and machine learning models
+
+### Example Log Output
+
+```
+INFO  - Starting CleanupStaleSkinsJob
+INFO  - Starting stale skin cleanup - marking skins not seen since 2025-11-15T08:00:00 as SOLD
+INFO  - Found 15 stale skins to mark as SOLD
+DEBUG - Marked skin as SOLD: AK-47 | Redline (Field-Tested) (ID: 12345, Last seen: 2025-11-15T07:30:00)
+INFO  - Successfully marked 15 skins as SOLD
+INFO  - CleanupStaleSkinsJob completed: 15 skins marked as SOLD
+```
+
+### Example Timeline
+
+**Scenario**: Bot scrapes BitSkins every 30 minutes, API cleanup runs every 30 minutes, stale threshold is 2 hours
+
+```
+10:00 - Bot sees "AK-47 Redline $100" → message sent → lastSeenAt = 10:00
+10:30 - Bot sees it again → message sent → lastSeenAt = 10:30
+11:00 - Bot sees it again → message sent → lastSeenAt = 11:00
+11:30 - Skin SOLD on marketplace, bot doesn't see it anymore
+12:00 - Cleanup runs: lastSeenAt = 11:00, cutoff = 10:00 → still within 2h window
+12:30 - Cleanup runs: lastSeenAt = 11:00, cutoff = 10:30 → still within 2h window
+13:00 - Cleanup runs: lastSeenAt = 11:00, cutoff = 11:00 → still within 2h window
+13:30 - Cleanup runs: lastSeenAt = 11:00, cutoff = 11:30 → STALE! Marked as SOLD
+```
+
+### Performance Considerations
+
+- Query uses indexed `status` and `lastSeenAt` columns for fast lookups
+- Update operations batched within single transaction
+- Minimal memory footprint (processes all matching skins in one query)
+- No pagination needed (stale skins are typically a small subset)
+
+---
+
+## 4. RetryFailedConversionsJob
 
 **Purpose**: Retries currency conversions that previously failed due to exchange rate API unavailability.
 

@@ -1,5 +1,6 @@
 package com.thetruemarket.api.infrastructure.persistence.entity;
 
+import com.thetruemarket.api.domain.valueobject.SkinStatus;
 import com.thetruemarket.api.domain.valueobject.Wear;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -102,6 +103,13 @@ public class SkinEntity {
     private String link;
 
     /**
+     * URL of the skin image
+     * Can be null if not available
+     */
+    @Column(name = "image_url", nullable = true, length = 1000)
+    private String imageUrl;
+
+    /**
      * When the skin was first saved
      */
     @Column(name = "created_at", nullable = false)
@@ -113,15 +121,38 @@ public class SkinEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * Last time this skin was seen by a bot (heartbeat timestamp)
+     * Used to detect when a skin has been sold
+     */
+    @Column(name = "last_seen_at", nullable = false)
+    private LocalDateTime lastSeenAt;
+
+    /**
+     * Current availability status of the skin
+     * AVAILABLE: Currently listed in marketplace
+     * SOLD: No longer available (not seen for configured duration)
+     * UNAVAILABLE: Temporarily unavailable
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private SkinStatus status;
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        this.lastSeenAt = now;
+        if (this.status == null) {
+            this.status = SkinStatus.AVAILABLE;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.updatedAt = now;
+        this.lastSeenAt = now;
     }
 }

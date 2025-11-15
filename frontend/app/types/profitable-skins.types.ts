@@ -5,6 +5,7 @@ export interface ProfitableSkin {
   skinId: string;
   skinName: string;
   wear: string;
+  floatValueCents: number | null;
   marketPrice: number;
   marketCurrency: string;
   marketSource: string;
@@ -44,6 +45,8 @@ export interface SkinCardData {
   skinName: string;
   wear: string;
   wearDisplay: string;
+  wearValueDisplay: string;
+  wearValueNormalized: number | null;
   marketPrice: string;
   marketSource: string;
   marketSourceDisplay: string;

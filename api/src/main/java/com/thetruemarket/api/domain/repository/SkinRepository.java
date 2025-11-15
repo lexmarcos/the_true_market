@@ -1,9 +1,11 @@
 package com.thetruemarket.api.domain.repository;
 
 import com.thetruemarket.api.domain.model.Skin;
+import com.thetruemarket.api.domain.valueobject.SkinStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,4 +52,14 @@ public interface SkinRepository {
      * @return Page of skins
      */
     Page<Skin> findAll(Pageable pageable);
+
+    /**
+     * Finds all skins with specific status that haven't been seen since the cutoff date
+     * Used for cleanup operations to identify stale skins
+     *
+     * @param status The skin status to filter by
+     * @param cutoffDate The last seen cutoff date
+     * @return List of skins not seen since the cutoff date
+     */
+    List<Skin> findByStatusAndLastSeenAtBefore(SkinStatus status, LocalDateTime cutoffDate);
 }

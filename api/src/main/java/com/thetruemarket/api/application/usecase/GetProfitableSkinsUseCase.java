@@ -97,14 +97,22 @@ public class GetProfitableSkinsUseCase {
             Optional<SteamPriceHistory> historyOpt = priceHistoryRepository
                     .findLatestBySkinNameAndWear(skin.getName(), skin.getWear());
 
+            // Convert float value to cents (× 10000) if present
+            Long floatValueCents = null;
+            if (skin.getFloatValue() != null) {
+                floatValueCents = Math.round(skin.getFloatValue() * 10000);
+            }
+
             ProfitAnalysis.ProfitAnalysisBuilder builder = ProfitAnalysis.builder()
                     .skinId(skin.getId())
                     .skinName(skin.getName())
                     .wear(skin.getWear())
+                    .floatValueCents(floatValueCents)
                     .marketPrice(skin.getPrice())
                     .marketCurrency(skin.getCurrency())
                     .marketSource(skin.getMarketSource())
                     .link(skin.getLink())
+                    .imageUrl(skin.getImageUrl())
                     .lastUpdated(skin.getUpdatedAt())
                     .hasHistory(historyOpt.isPresent());
 

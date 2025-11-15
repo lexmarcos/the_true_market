@@ -255,7 +255,7 @@ class DashSkinsMonitor:
         item_type = item.get("item_type", "")
         rarity = item.get("rarity", "")
         quality = item.get("quality", "")
-        
+
         # Gerar link do item
         item_link = self.generate_item_link(market_hash_name, item_id) if item_id else None
 

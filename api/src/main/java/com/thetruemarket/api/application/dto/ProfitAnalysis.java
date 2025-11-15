@@ -33,6 +33,12 @@ public class ProfitAnalysis {
     private Wear wear;
 
     /**
+     * Float value in cents (× 10000)
+     * Example: 0.1234 becomes 1234, frontend divides by 10000 to get 0.1234
+     */
+    private Long floatValueCents;
+
+    /**
      * Market price in cents (original currency)
      */
     private Long marketPrice;
@@ -51,6 +57,11 @@ public class ProfitAnalysis {
      * Direct link to the item on the marketplace
      */
     private String link;
+
+    /**
+     * URL of the skin image
+     */
+    private String imageUrl;
 
     /**
      * Steam average price in USD cents
