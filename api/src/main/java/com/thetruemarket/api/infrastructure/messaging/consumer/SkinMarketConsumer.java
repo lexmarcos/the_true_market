@@ -48,8 +48,8 @@ public class SkinMarketConsumer {
       // Create domain message with metadata
       SkinMarketMessage skinMarketMessage = SkinMarketMessage.from(marketData, routingKey);
 
-      // Process the message based on routing key
-      processMarketData(skinMarketMessage);
+      // Process the message based on routing key (pass DTO for image resolution)
+      processMarketData(skinMarketMessage, messageDto);
 
       log.info("Successfully processed message from source: {}", skinMarketMessage.getSource());
 
@@ -65,9 +65,10 @@ public class SkinMarketConsumer {
    * Processes the skin market data based on the source.
    * Delegates to the use case layer for business logic execution.
    *
-   * @param message The domain message containing market data and metadata
+   * @param message    The domain message containing market data and metadata
+   * @param messageDto The original DTO with image resolution fields
    */
-  private void processMarketData(SkinMarketMessage message) {
+  private void processMarketData(SkinMarketMessage message, SkinMarketDataDTO messageDto) {
     log.debug("Processing message from {}: Item ID: {}, Asset ID: {}, Float: {}, Price: {} {}",
         message.getSource(),
         message.getData().getId(),
@@ -78,9 +79,10 @@ public class SkinMarketConsumer {
 
     // Delegate to application layer use case
     // The use case will:
+    // - Resolve image URL from cache or various sources
     // - Save the skin if it doesn't exist
     // - Check if price history needs update
     // - Create history update task if needed
-    processSkinMarketDataUseCase.execute(message.getData());
+    processSkinMarketDataUseCase.execute(message.getData(), messageDto);
   }
 }

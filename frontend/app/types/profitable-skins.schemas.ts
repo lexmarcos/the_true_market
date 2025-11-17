@@ -22,6 +22,7 @@ export const profitableSkinSchema = z.object({
   hasHistory: z.boolean(),
   lastUpdated: z.string().nullable(),
   link: z.string(),
+  imageUrl: z.string(),
 });
 
 /**

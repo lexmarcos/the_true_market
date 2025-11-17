@@ -91,12 +91,6 @@ public class Skin {
     private String link;
 
     /**
-     * URL of the skin image
-     * Can be null if not available
-     */
-    private String imageUrl;
-
-    /**
      * When the skin was first saved
      */
     private LocalDateTime createdAt;
@@ -123,29 +117,30 @@ public class Skin {
     /**
      * Creates a Skin instance and automatically determines the wear category
      * If floatValue is present, wear is calculated from it
-     * If floatValue is null, wear is extracted from skin name (e.g., "AK-47 | Redline (Factory New)")
+     * If floatValue is null, wear is extracted from skin name (e.g., "AK-47 |
+     * Redline (Factory New)")
      *
-     * @param id The unique identifier
-     * @param name The skin name (must contain wear in parentheses if floatValue is null)
-     * @param assetId The asset identifier
-     * @param floatValue The float value (can be null)
-     * @param paintSeed The paint seed
-     * @param paintIndex The paint index
-     * @param stickers The list of stickers
+     * @param id           The unique identifier
+     * @param name         The skin name (must contain wear in parentheses if
+     *                     floatValue is null)
+     * @param assetId      The asset identifier
+     * @param floatValue   The float value (can be null)
+     * @param paintSeed    The paint seed
+     * @param paintIndex   The paint index
+     * @param stickers     The list of stickers
      * @param stickerCount The number of stickers
-     * @param price The market price in cents (can be null)
-     * @param currency The currency of the price (can be null)
+     * @param price        The market price in cents (can be null)
+     * @param currency     The currency of the price (can be null)
      * @param marketSource The market source (can be null)
-     * @param link The direct link to the item (can be null)
-     * @param imageUrl The URL of the skin image (can be null)
+     * @param link         The direct link to the item (can be null)
      * @return A new Skin instance with wear determined
-     * @throws IllegalArgumentException if wear cannot be determined from either floatValue or name
+     * @throws IllegalArgumentException if wear cannot be determined from either
+     *                                  floatValue or name
      */
     public static Skin create(String id, String name, String assetId, Double floatValue,
-                              Integer paintSeed, Integer paintIndex,
-                              List<Sticker> stickers, Integer stickerCount,
-                              Long price, String currency, String marketSource, String link,
-                              String imageUrl) {
+            Integer paintSeed, Integer paintIndex,
+            List<Sticker> stickers, Integer stickerCount,
+            Long price, String currency, String marketSource, String link) {
         Wear calculatedWear;
 
         // If floatValue is present, calculate wear from it
@@ -172,7 +167,6 @@ public class Skin {
                 .currency(currency)
                 .marketSource(marketSource)
                 .link(link)
-                .imageUrl(imageUrl)
                 .createdAt(now)
                 .updatedAt(now)
                 .lastSeenAt(now)

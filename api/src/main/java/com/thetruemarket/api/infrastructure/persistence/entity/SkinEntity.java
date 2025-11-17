@@ -103,11 +103,11 @@ public class SkinEntity {
     private String link;
 
     /**
-     * URL of the skin image
-     * Can be null if not available
+     * Relationship to skin image (1:1 via skin name)
      */
-    @Column(name = "image_url", nullable = true, length = 1000)
-    private String imageUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "name", referencedColumnName = "skin_name", insertable = false, updatable = false)
+    private SkinImageEntity skinImage;
 
     /**
      * When the skin was first saved

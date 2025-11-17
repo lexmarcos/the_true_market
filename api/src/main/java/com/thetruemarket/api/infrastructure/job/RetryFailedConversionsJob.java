@@ -45,8 +45,8 @@ public class RetryFailedConversionsJob {
 
         try {
             // Find all tasks ready for retry
-            List<FailedConversionTask> tasksToRetry =
-                    failedConversionTaskRepository.findTasksReadyForRetry(LocalDateTime.now());
+            List<FailedConversionTask> tasksToRetry = failedConversionTaskRepository
+                    .findTasksReadyForRetry(LocalDateTime.now());
 
             if (tasksToRetry.isEmpty()) {
                 log.debug("No failed conversion tasks ready for retry");
@@ -108,8 +108,7 @@ public class RetryFailedConversionsJob {
             // Deserialize SkinMarketData from JSON
             SkinMarketData skinMarketData = objectMapper.readValue(
                     task.getSkinDataJson(),
-                    SkinMarketData.class
-            );
+                    SkinMarketData.class);
 
             // Try to convert price to USD
             Long priceInUsd;
@@ -137,9 +136,7 @@ public class RetryFailedConversionsJob {
                     priceInUsd,
                     "USD",
                     skinMarketData.getStore(),
-                    skinMarketData.getLink(),
-                    skinMarketData.getImageUrl()
-            );
+                    skinMarketData.getLink());
 
             saveSkinUseCase.execute(skin);
             log.info("Successfully saved skin {} from retry task {}", skin.getId(), task.getId());

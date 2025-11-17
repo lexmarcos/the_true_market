@@ -54,6 +54,12 @@ public class SkinMarketDataDTO {
   @JsonProperty("image_url")
   private String imageUrl;
 
+  @JsonProperty("icon_url")
+  private String iconUrl;
+
+  @JsonProperty("class_id")
+  private String classId;
+
   /**
    * Converts this DTO to a domain entity.
    *
@@ -75,7 +81,6 @@ public class SkinMarketDataDTO {
         .store(store)
         .currency(currency)
         .link(link)
-        .imageUrl(imageUrl)
         .build();
   }
 

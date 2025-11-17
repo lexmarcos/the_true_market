@@ -310,22 +310,23 @@ class BitSkinsMonitor:
         price_cents = item.get("price", 0) // 10  # Converter de milésimos para centavos
         item_id = item.get("id")
         asset_id = item.get("asset_id")
-        
+        class_id = item.get("class_id")
+
         # BitSkins não fornece float_value diretamente, apenas float_id
         # Seria necessário fazer uma requisição adicional para obter o float
         float_value = item.get("float_value")  # Geralmente None
         float_id = item.get("float_id")  # ID para buscar float em outra API
-        
+
         # Paint info
         paint_seed = item.get("paint_seed")  # Geralmente não disponível na busca
         paint_index = item.get("paint_id")  # BitSkins usa 'paint_id' ao invés de 'paint_index'
-        
+
         name = item.get("name", "Unknown")
-        
+
         # Processar stickers
         stickers = []
         sticker_list = item.get("stickers", [])
-        
+
         if isinstance(sticker_list, list):
             for sticker in sticker_list:
                 sticker_data = {
@@ -336,7 +337,7 @@ class BitSkinsMonitor:
                     "class_id": str(sticker.get("class_id", ""))
                 }
                 stickers.append(sticker_data)
-        
+
         sticker_count = item.get("sticker_counter", len(stickers))
 
         # Gerar link do item
@@ -347,6 +348,7 @@ class BitSkinsMonitor:
             "price": price_cents,
             "id": item_id,
             "asset_id": asset_id,
+            "class_id": class_id,
             "float_value": float_value,
             "float_id": float_id,  # Adicionar float_id para possível busca futura
             "paint_seed": paint_seed,
@@ -358,7 +360,7 @@ class BitSkinsMonitor:
             "currency": "USD",
             "link": item_link
         }
-        
+
         return queue_data
     
     def filter_high_discount_items(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

@@ -164,6 +164,9 @@ export function useProfitableSkins(
       // Generate Steam Market link
       const steamMarketLink = generateSteamMarketLink(skin.skinName);
 
+      // Format image URL with the required suffix
+      const imageUrl = `${skin.imageUrl}/512fx512f`;
+
       return {
         skinId: skin.skinId,
         skinName: skin.skinName,
@@ -197,6 +200,7 @@ export function useProfitableSkins(
         discountBadgeVariant,
         link: skin.link,
         steamMarketLink,
+        imageUrl,
       };
     });
   }, [rawSkins]);
@@ -241,7 +245,7 @@ function calculateExpectedGain(
 
   // Convert market price to USD cents if needed
   let marketPriceUsd = marketPrice;
-  
+
   // Simple conversion rates (ideally would come from API)
   // For now, assuming BRL to USD conversion ~ 5:1
   if (marketCurrency === "BRL") {

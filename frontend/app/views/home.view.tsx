@@ -100,7 +100,7 @@ export function HomeView({
           </div>
 
           {/* Sorting Controls */}
-          <div className="flex flex-wrap items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="flex flex-wrap items-center gap-4 p-4 border-0 bg-white/95 dark:bg-slate-900/60 shadow-xl ring-1 ring-slate-200/80 dark:ring-slate-800/70 rounded-lg">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Ordenar por:
@@ -109,10 +109,10 @@ export function HomeView({
                 <SelectTrigger className="w-44">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="profit">Lucro</SelectItem>
-                  <SelectItem value="discount">Desconto</SelectItem>
-                  <SelectItem value="gain">Ganho</SelectItem>
+                <SelectContent className="border-0 bg-white dark:bg-slate-900 shadow-xl ring-1 ring-slate-200 dark:ring-slate-800">
+                  <SelectItem className="hover:dark:bg-slate-800 :dark:bg-slate-800" value="profit">Lucro</SelectItem>
+                  <SelectItem className="hover:dark:bg-slate-800 :dark:bg-slate-800" value="discount">Desconto</SelectItem>
+                  <SelectItem className="hover:dark:bg-slate-800 :dark:bg-slate-800" value="gain">Ganho</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -125,9 +125,9 @@ export function HomeView({
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Maior para Menor</SelectItem>
-                  <SelectItem value="asc">Menor para Maior</SelectItem>
+                <SelectContent className="border-0 bg-white dark:bg-slate-900 shadow-xl ring-1 ring-slate-200 dark:ring-slate-800">
+                  <SelectItem className="hover:dark:bg-slate-800" value="desc">Maior para Menor</SelectItem>
+                  <SelectItem className="hover:dark:bg-slate-800" value="asc">Menor para Maior</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -135,7 +135,7 @@ export function HomeView({
 
           {/* Stats */}
           {hasProfitableSkins && (
-            <div className="mt-6 bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div className="mt-6 border-0 bg-white/95 dark:bg-slate-900/60 shadow-xl ring-1 ring-slate-200/80 dark:ring-slate-800/70 p-4 rounded-lg">
               <div className="flex items-center gap-2">
                 <TrendingUp className="text-green-600" size={20} />
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -150,18 +150,51 @@ export function HomeView({
         {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, index) => (
-              <Card key={index} className="overflow-hidden">
-                <CardHeader className="pb-4">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2 mt-2" />
+              <Card
+                key={index}
+                className="overflow-hidden border-0 bg-white/95 dark:bg-slate-900/60 shadow-xl ring-1 ring-slate-200/80 dark:ring-slate-800/70"
+              >
+                <CardHeader className="pb-0 space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="w-full h-48 rounded-lg bg-slate-200/50 dark:bg-slate-800/50" />
+                    <Skeleton className="h-6 w-3/4 bg-slate-200/50 dark:bg-slate-800/50" />
+                    <Skeleton className="h-8 w-full rounded-full bg-slate-200/50 dark:bg-slate-800/50" />
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
+
+                <CardContent className="space-y-5 px-5 pb-5">
+                  {/* Market Price Section */}
+                  <div className="rounded-2xl border border-slate-100/80 dark:border-slate-800/70 bg-linear-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 p-4">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-6 w-32 bg-slate-200/60 dark:bg-slate-700/60" />
+                      <Skeleton className="h-8 w-20 bg-slate-200/60 dark:bg-slate-700/60" />
+                    </div>
+                  </div>
+
+                  {/* Gain Projection Section */}
+                  <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-linear-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800 p-4 space-y-4">
+                    <div className="space-y-1">
+                      <Skeleton className="h-5 w-48 bg-slate-200/60 dark:bg-slate-700/60" />
+                      <Skeleton className="h-3 w-full bg-slate-200/60 dark:bg-slate-700/60" />
+                    </div>
+                    <Skeleton className="h-10 w-full rounded-md bg-slate-200/60 dark:bg-slate-700/60" />
+                    <div className="rounded-xl bg-white/85 dark:bg-slate-900/30 border border-emerald-100/60 dark:border-slate-800 p-4 space-y-3">
+                      <Skeleton className="h-4 w-full bg-slate-200/60 dark:bg-slate-700/60" />
+                      <Skeleton className="h-4 w-full bg-slate-200/60 dark:bg-slate-700/60" />
+                      <div className="border-t border-emerald-100/70 dark:border-slate-800 pt-3">
+                        <Skeleton className="h-5 w-full bg-slate-200/60 dark:bg-slate-700/60" />
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-8 w-full" />
+
+                <CardFooter className="-mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 flex-col gap-3">
+                  <div className="flex gap-2 w-full">
+                    <Skeleton className="h-9 flex-1 bg-slate-200/60 dark:bg-slate-700/60" />
+                    <Skeleton className="h-9 flex-1 bg-slate-200/60 dark:bg-slate-700/60" />
+                  </div>
+                  <Skeleton className="h-4 w-40 bg-slate-200/60 dark:bg-slate-700/60" />
+                  <Skeleton className="h-9 w-full bg-slate-200/60 dark:bg-slate-700/60" />
                 </CardFooter>
               </Card>
             ))}
@@ -208,6 +241,11 @@ export function HomeView({
               >
                 <CardHeader className="pb-0 space-y-4">
                   <div className="flex flex-col gap-2">
+                    <img
+                      src={skin.imageUrl}
+                      alt={skin.skinName}
+                      className="w-full h-auto object-contain rounded-lg"
+                    />
                     <h3 className="mt-0 font-semibold text-xl text-slate-900 dark:text-slate-100 leading-snug">
                       {skin.skinName}
                     </h3>
@@ -242,7 +280,7 @@ export function HomeView({
                         <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">
                           Projeção de ganho líquido
                         </p>
-                        <p className="text-xs text-emerald-900/80 dark:text-emerald-100/80">
+                        <p className="text-xs text-blue-900/80 dark:text-blue-100/80">
                           Comparativo direto entre Steam e{" "}
                           <span className="capitalize">
                             {skin.marketSourceDisplay}

@@ -4,6 +4,7 @@ import com.thetruemarket.api.domain.exception.ExchangeRateUnavailableException;
 import com.thetruemarket.api.domain.model.Skin;
 import com.thetruemarket.api.domain.model.SkinMarketData;
 import com.thetruemarket.api.domain.service.CurrencyConversionService;
+import com.thetruemarket.api.infrastructure.messaging.dto.SkinMarketDataDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Main orchestrator Use Case for processing skin market data from RabbitMQ
- * Coordinates the workflow: convert currency -> save skin -> check history -> create task if needed
+ * Coordinates the workflow: resolve image -> convert currency -> save skin ->
+ * check history -> create task if needed
  * Implements the Single Responsibility Principle (SOLID)
  */
 @Service
@@ -23,24 +25,33 @@ public class ProcessSkinMarketDataUseCase {
     private final CreateHistoryUpdateTaskUseCase createHistoryUpdateTaskUseCase;
     private final CurrencyConversionService currencyConversionService;
     private final SaveFailedConversionUseCase saveFailedConversionUseCase;
+    private final ResolveImageUrlUseCase resolveImageUrlUseCase;
 
     /**
      * Processes skin market data received from RabbitMQ
-     * 1. Converts price to USD if necessary
-     * 2. Saves the skin if it doesn't exist
-     * 3. Checks if price history needs update
-     * 4. Creates a history update task if necessary
+     * 1. Resolves image URL from cache or various sources
+     * 2. Converts price to USD if necessary
+     * 3. Saves the skin if it doesn't exist
+     * 4. Checks if price history needs update
+     * 5. Creates a history update task if necessary
      *
-     * @param skinMarketData The skin market data from RabbitMQ message
+     * @param skinMarketData    The skin market data from RabbitMQ message
+     * @param skinMarketDataDTO The original DTO with image resolution fields
      */
     @Transactional
-    public void execute(SkinMarketData skinMarketData) {
+    public void execute(SkinMarketData skinMarketData, SkinMarketDataDTO skinMarketDataDTO) {
         log.info("Processing skin market data: {} (ID: {}) - Price: {} {}",
                 skinMarketData.getName(), skinMarketData.getId(),
                 skinMarketData.getPrice(), skinMarketData.getCurrency());
 
         try {
-            // Step 0: Convert price to USD if necessary
+            // Step 0: Resolve image URL FIRST (from cache or various sources)
+            // This will check if image exists in skins_images table, if not, resolve and
+            // save it
+            resolveImageUrlUseCase.resolve(skinMarketData.getName(), skinMarketDataDTO);
+            log.debug("Image URL resolved/cached for skin: {}", skinMarketData.getName());
+
+            // Step 1: Convert price to USD if necessary
             Long priceInUsd;
             String finalCurrency;
 
@@ -69,7 +80,8 @@ public class ProcessSkinMarketDataUseCase {
                 }
             }
 
-            // Step 1: Create domain Skin entity with USD price
+            // Step 2: Create domain Skin entity with USD price
+            // Image URL is stored separately in skins_images table with FK relationship
             Skin skin = Skin.create(
                     skinMarketData.getId(),
                     skinMarketData.getName(),
@@ -82,24 +94,20 @@ public class ProcessSkinMarketDataUseCase {
                     priceInUsd,
                     finalCurrency,
                     skinMarketData.getStore(),
-                    skinMarketData.getLink(),
-                    skinMarketData.getImageUrl()
-            );
+                    skinMarketData.getLink());
 
             saveSkinUseCase.execute(skin);
 
-            // Step 2: Check if price history needs update
+            // Step 3: Check if price history needs update
             boolean needsUpdate = checkPriceHistoryUseCase.needsUpdate(
                     skin.getName(),
-                    skin.getWear()
-            );
+                    skin.getWear());
 
-            // Step 3: Create history update task if needed
+            // Step 4: Create history update task if needed
             if (needsUpdate) {
                 createHistoryUpdateTaskUseCase.execute(
                         skin.getName(),
-                        skin.getWear()
-                );
+                        skin.getWear());
             }
 
             log.info("Successfully processed skin: {} ({}) - Final price: {} USD",

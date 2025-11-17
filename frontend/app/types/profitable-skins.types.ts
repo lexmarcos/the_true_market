@@ -20,6 +20,7 @@ export interface ProfitableSkin {
   hasHistory: boolean;
   lastUpdated: string | null;
   link: string;
+  imageUrl: string;
 }
 
 /**
@@ -73,4 +74,5 @@ export interface SkinCardData {
   discountBadgeVariant: "default" | "secondary" | "destructive" | "outline";
   link: string;
   steamMarketLink: string;
+  imageUrl: string;
 }

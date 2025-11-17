@@ -219,20 +219,20 @@ class DashSkinsMonitor:
         price_cents = int(item.get("price", 0) * 100)  # Converter para centavos
         item_id = item.get("_id")
         asset_id = item.get("assetid")
-        
+
         # Informações do wear_data
         wear_data = item.get("wear_data", {})
         float_value = wear_data.get("floatvalue")
         paint_seed = wear_data.get("paintseed")
         paint_index = wear_data.get("paintindex")
-        
+
         market_hash_name = item.get("market_hash_name", "Unknown")
         name = market_hash_name
-        
+
         # Processar stickers
         stickers = []
         sticker_list = wear_data.get("stickers", [])
-        
+
         if isinstance(sticker_list, list):
             for idx, sticker in enumerate(sticker_list):
                 if isinstance(sticker, dict):
@@ -244,9 +244,9 @@ class DashSkinsMonitor:
                         "class_id": str(sticker.get("classId", ""))
                     }
                     stickers.append(sticker_data)
-        
+
         sticker_count = len(stickers)
-        
+
         # Informações adicionais da DashSkins
         steam_price = item.get("steamPrice", 0)
         discount = item.get("discount", 0)
@@ -255,6 +255,7 @@ class DashSkinsMonitor:
         item_type = item.get("item_type", "")
         rarity = item.get("rarity", "")
         quality = item.get("quality", "")
+        icon_url = item.get("icon_url", "")
 
         # Gerar link do item
         item_link = self.generate_item_link(market_hash_name, item_id) if item_id else None
@@ -279,12 +280,13 @@ class DashSkinsMonitor:
             "item_type": item_type,
             "rarity": rarity,
             "quality": quality,
+            "icon_url": icon_url,
             "source": "dashskins",
             "store": "dashskins",
             "currency": "BRL",
             "link": item_link
         }
-        
+
         return queue_data
     
     def monitor(self, check_interval: int = 60, max_iterations: int = None):

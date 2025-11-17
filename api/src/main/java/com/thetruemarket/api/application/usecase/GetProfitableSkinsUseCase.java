@@ -7,6 +7,7 @@ import com.thetruemarket.api.domain.model.SteamPriceHistory;
 import com.thetruemarket.api.domain.repository.SkinRepository;
 import com.thetruemarket.api.domain.repository.SteamPriceHistoryRepository;
 import com.thetruemarket.api.domain.service.ProfitCalculationService;
+import com.thetruemarket.api.infrastructure.persistence.repository.SkinImageJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,14 +28,16 @@ public class GetProfitableSkinsUseCase {
     private final SkinRepository skinRepository;
     private final SteamPriceHistoryRepository priceHistoryRepository;
     private final ProfitCalculationService profitCalculationService;
+    private final SkinImageJpaRepository skinImageRepository;
 
     /**
      * Executes the use case to retrieve profitable skins
      *
-     * @param minProfit Minimum profit percentage to filter (optional)
+     * @param minProfit  Minimum profit percentage to filter (optional)
      * @param maxResults Maximum number of results to return (optional)
-     * @param sortBy Field to sort by: "profit", "discount", "gain" (optional, defaults to "profit")
-     * @param order Sort order: "asc" or "desc" (optional, defaults to "desc")
+     * @param sortBy     Field to sort by: "profit", "discount", "gain" (optional,
+     *                   defaults to "profit")
+     * @param order      Sort order: "asc" or "desc" (optional, defaults to "desc")
      * @return List of ProfitAnalysis DTOs
      */
     public List<ProfitAnalysis> execute(Double minProfit, Integer maxResults, String sortBy, String order) {
@@ -89,7 +92,8 @@ public class GetProfitableSkinsUseCase {
      * Builds a ProfitAnalysis DTO for a given skin
      *
      * @param skin The skin to analyze
-     * @return Optional containing ProfitAnalysis if profit can be calculated, empty otherwise
+     * @return Optional containing ProfitAnalysis if profit can be calculated, empty
+     *         otherwise
      */
     private Optional<ProfitAnalysis> buildProfitAnalysis(Skin skin) {
         try {
@@ -103,6 +107,11 @@ public class GetProfitableSkinsUseCase {
                 floatValueCents = Math.round(skin.getFloatValue() * 10000);
             }
 
+            // Get image URL from skins_images table by skin name
+            String imageUrl = skinImageRepository.findBySkinName(skin.getName())
+                    .map(skinImage -> skinImage.getImageUrl())
+                    .orElse(null);
+
             ProfitAnalysis.ProfitAnalysisBuilder builder = ProfitAnalysis.builder()
                     .skinId(skin.getId())
                     .skinName(skin.getName())
@@ -112,7 +121,7 @@ public class GetProfitableSkinsUseCase {
                     .marketCurrency(skin.getCurrency())
                     .marketSource(skin.getMarketSource())
                     .link(skin.getLink())
-                    .imageUrl(skin.getImageUrl())
+                    .imageUrl(imageUrl) // Use cached image URL if available
                     .lastUpdated(skin.getUpdatedAt())
                     .hasHistory(historyOpt.isPresent());
 
@@ -129,8 +138,7 @@ public class GetProfitableSkinsUseCase {
                             skin.getPrice(),
                             steamPrice,
                             lastSalePrice,
-                            lowestBuyOrderPrice
-                    );
+                            lowestBuyOrderPrice);
 
                     builder.steamAveragePrice(steamPrice)
                             .lastSalePrice(lastSalePrice)
@@ -141,11 +149,16 @@ public class GetProfitableSkinsUseCase {
                             .profitPercentageVsLastSale(profitResult.getProfitPercentageVsLastSale())
                             .profitPercentageVsLowestBuyOrder(profitResult.getProfitPercentageVsLowestBuyOrder());
 
-                    log.debug("Calculated profit for skin {}: profit={}%, profitVsLastSale={}%, profitVsLowestBuyOrder={}%, gain={} cents",
+                    log.debug(
+                            "Calculated profit for skin {}: profit={}%, profitVsLastSale={}%, profitVsLowestBuyOrder={}%, gain={} cents",
                             skin.getId(),
                             String.format("%.2f", profitResult.getProfitPercentage()),
-                            profitResult.getProfitPercentageVsLastSale() != null ? String.format("%.2f", profitResult.getProfitPercentageVsLastSale()) : "N/A",
-                            profitResult.getProfitPercentageVsLowestBuyOrder() != null ? String.format("%.2f", profitResult.getProfitPercentageVsLowestBuyOrder()) : "N/A",
+                            profitResult.getProfitPercentageVsLastSale() != null
+                                    ? String.format("%.2f", profitResult.getProfitPercentageVsLastSale())
+                                    : "N/A",
+                            profitResult.getProfitPercentageVsLowestBuyOrder() != null
+                                    ? String.format("%.2f", profitResult.getProfitPercentageVsLowestBuyOrder())
+                                    : "N/A",
                             profitResult.getExpectedGainCents());
                 } catch (IllegalArgumentException e) {
                     log.warn("Could not calculate profit for skin {}: {}", skin.getId(), e.getMessage());
@@ -176,17 +189,17 @@ public class GetProfitableSkinsUseCase {
         switch (sortField) {
             case "discount":
                 return Comparator.comparing(
-                        analysis -> analysis.getDiscountPercentage() != null ? analysis.getDiscountPercentage() : Double.MIN_VALUE
-                );
+                        analysis -> analysis.getDiscountPercentage() != null ? analysis.getDiscountPercentage()
+                                : Double.MIN_VALUE);
             case "gain":
                 return Comparator.comparing(
-                        analysis -> analysis.getExpectedGainUsd() != null ? analysis.getExpectedGainUsd() : Long.MIN_VALUE
-                );
+                        analysis -> analysis.getExpectedGainUsd() != null ? analysis.getExpectedGainUsd()
+                                : Long.MIN_VALUE);
             case "profit":
             default:
                 return Comparator.comparing(
-                        analysis -> analysis.getProfitPercentage() != null ? analysis.getProfitPercentage() : Double.MIN_VALUE
-                );
+                        analysis -> analysis.getProfitPercentage() != null ? analysis.getProfitPercentage()
+                                : Double.MIN_VALUE);
         }
     }
 }
