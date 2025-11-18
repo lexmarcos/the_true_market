@@ -1,18 +1,30 @@
 /**
- * Format currency from cents to display format
- * @param cents - Amount in cents
- * @param currency - Currency code (USD, BRL, etc.)
- * @returns Formatted currency string
+ * Format currency from USD cents to display format in target currency
+ * @param usdCents - Amount in USD cents
+ * @param toCurrency - Target currency code (USD, BRL, EUR)
+ * @param exchangeRates - Exchange rates object with usd, brl, eur rates
+ * @returns Formatted currency string in target currency
  */
 export function formatCurrency(
-  cents: number | null | undefined,
-  currency: string = "USD"
+  usdCents: number | null | undefined,
+  toCurrency: string = "USD",
+  exchangeRates: { usd: number; brl: number; eur: number } = {
+    usd: 1,
+    brl: 1,
+    eur: 1,
+  }
 ): string {
-  if (cents === null || cents === undefined) {
+  if (usdCents === null || usdCents === undefined) {
     return "N/A";
   }
 
-  const amount = cents / 100;
+  // Convert USD cents to target currency cents
+  const currencyKey = toCurrency.toLowerCase() as "usd" | "brl" | "eur";
+  const rate = exchangeRates[currencyKey] || 1;
+  const targetCents = Math.round(usdCents * rate);
+
+  // Convert cents to decimal amount
+  const amount = targetCents / 100;
 
   const currencyMap: Record<string, string> = {
     USD: "en-US",
@@ -20,11 +32,11 @@ export function formatCurrency(
     EUR: "de-DE",
   };
 
-  const locale = currencyMap[currency] || "en-US";
+  const locale = currencyMap[toCurrency] || "en-US";
 
   return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: currency,
+    currency: toCurrency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);

@@ -30,8 +30,14 @@ import {
   TrendingDown,
   ExternalLink,
   ChartArea,
+  ArrowUpDown,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  Percent,
+  DollarSign,
 } from "lucide-react";
 import { SkinCardData } from "../types/profitable-skins.types";
+import { CurrencySelector } from "@/components/currency-selector";
 
 interface HomeViewProps {
   skins: SkinCardData[];
@@ -100,36 +106,90 @@ export function HomeView({
           </div>
 
           {/* Sorting Controls */}
-          <div className="flex flex-wrap items-center gap-4 p-4 border-0 bg-white/95 dark:bg-slate-900/60 shadow-xl ring-1 ring-slate-200/80 dark:ring-slate-800/70 rounded-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Ordenar por:
-              </span>
-              <Select value={sortBy} onValueChange={onSortByChange}>
-                <SelectTrigger className="w-44">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-0 bg-white dark:bg-slate-900 shadow-xl ring-1 ring-slate-200 dark:ring-slate-800">
-                  <SelectItem className="hover:dark:bg-slate-800 :dark:bg-slate-800" value="profit">Lucro</SelectItem>
-                  <SelectItem className="hover:dark:bg-slate-800 :dark:bg-slate-800" value="discount">Desconto</SelectItem>
-                  <SelectItem className="hover:dark:bg-slate-800 :dark:bg-slate-800" value="gain">Ganho</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="sticky top-4 z-30 mb-6 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 shadow-sm rounded-2xl p-2">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-2">
+              {/* Left side: Sorting */}
+              <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar px-2">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mr-2">
+                  <ArrowUpDown size={16} />
+                  <span className="text-sm font-medium whitespace-nowrap">
+                    Ordenar
+                  </span>
+                </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Ordem:
-              </span>
-              <Select value={order} onValueChange={onOrderChange}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-0 bg-white dark:bg-slate-900 shadow-xl ring-1 ring-slate-200 dark:ring-slate-800">
-                  <SelectItem className="hover:dark:bg-slate-800" value="desc">Maior para Menor</SelectItem>
-                  <SelectItem className="hover:dark:bg-slate-800" value="asc">Menor para Maior</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={sortBy} onValueChange={onSortByChange}>
+                  <SelectTrigger className="h-10 min-w-[150px] border-0 bg-slate-100/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-colors font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800">
+                    <SelectItem
+                      value="profit"
+                      className="rounded-lg cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <TrendingUp size={14} className="text-emerald-500" />
+                        <span>Lucro (%)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem
+                      value="discount"
+                      className="rounded-lg cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Percent size={14} className="text-blue-500" />
+                        <span>Desconto</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem
+                      value="gain"
+                      className="rounded-lg cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <DollarSign size={14} className="text-amber-500" />
+                        <span>Ganho ($)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
+
+                <Select value={order} onValueChange={onOrderChange}>
+                  <SelectTrigger className="h-10 min-w-[170px] border-0 bg-slate-100/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-colors font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800">
+                    <SelectItem
+                      value="desc"
+                      className="rounded-lg cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ArrowDownWideNarrow size={14} />
+                        <span>Maior para Menor</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem
+                      value="asc"
+                      className="rounded-lg cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ArrowUpNarrowWide size={14} />
+                        <span>Menor para Maior</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Right side: Currency */}
+              <div className="flex items-center gap-3 w-full md:w-auto px-2 md:border-l border-slate-200 dark:border-slate-800 md:pl-4">
+                <span className="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  Moeda
+                </span>
+                <div className="w-full md:w-auto">
+                  <CurrencySelector />
+                </div>
+              </div>
             </div>
           </div>
 

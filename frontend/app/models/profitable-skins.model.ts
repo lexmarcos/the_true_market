@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import useSWR from "swr";
 import { api } from "@/lib/api";
+import { useCurrency } from "@/lib/currency-context";
 import {
   formatCurrency,
   formatPercentage,
@@ -51,6 +52,9 @@ async function fetchProfitableSkins(
 export function useProfitableSkins(
   params?: ProfitableSkinsParams
 ): UseProfitableSkinsResult {
+  // Get currency context
+  const { selectedCurrency, exchangeRates } = useCurrency();
+
   // Generate cache key based on params
   const cacheKey = useMemo(() => {
     const queryParams = new URLSearchParams();
@@ -135,13 +139,15 @@ export function useProfitableSkins(
       const expectedGainVsLastSaleUsd = calculateExpectedGain(
         skin.marketPrice,
         skin.marketCurrency,
-        skin.lastSalePrice
+        skin.lastSalePrice,
+        exchangeRates
       );
 
       const expectedGainVsLowestBuyOrderUsd = calculateExpectedGain(
         skin.marketPrice,
         skin.marketCurrency,
-        skin.lowestBuyOrderPrice
+        skin.lowestBuyOrderPrice,
+        exchangeRates
       );
 
       // Determine if it's a gain or loss
@@ -174,19 +180,23 @@ export function useProfitableSkins(
         wearDisplay: formatWear(skin.wear),
         wearValueDisplay,
         wearValueNormalized,
-        marketPrice: formatCurrency(skin.marketPrice, skin.marketCurrency),
+        marketPrice: formatCurrency(
+          convertMarketPriceToUSD(skin.marketPrice, skin.marketCurrency, exchangeRates),
+          selectedCurrency,
+          exchangeRates
+        ),
         marketSource: skin.marketSource,
         marketSourceDisplay: formatMarketSource(skin.marketSource),
-        steamAveragePrice: formatCurrency(skin.steamAveragePrice, "USD"),
-        lastSalePrice: formatCurrency(skin.lastSalePrice, "USD"),
-        lowestBuyOrderPrice: formatCurrency(skin.lowestBuyOrderPrice, "USD"),
+        steamAveragePrice: formatCurrency(skin.steamAveragePrice, selectedCurrency, exchangeRates),
+        lastSalePrice: formatCurrency(skin.lastSalePrice, selectedCurrency, exchangeRates),
+        lowestBuyOrderPrice: formatCurrency(skin.lowestBuyOrderPrice, selectedCurrency, exchangeRates),
         discountPercentage: formatPercentage(skin.discountPercentage),
         profitPercentage: formatPercentage(skin.profitPercentage),
         profitPercentageVsLastSale: formatPercentage(skin.profitPercentageVsLastSale),
         profitPercentageVsLowestBuyOrder: formatPercentage(skin.profitPercentageVsLowestBuyOrder),
-        expectedGainUsd: formatCurrency(skin.expectedGainUsd, "USD"),
-        expectedGainVsLastSale: formatCurrency(expectedGainVsLastSaleUsd, "USD"),
-        expectedGainVsLowestBuyOrder: formatCurrency(expectedGainVsLowestBuyOrderUsd, "USD"),
+        expectedGainUsd: formatCurrency(skin.expectedGainUsd, selectedCurrency, exchangeRates),
+        expectedGainVsLastSale: formatCurrency(expectedGainVsLastSaleUsd, selectedCurrency, exchangeRates),
+        expectedGainVsLowestBuyOrder: formatCurrency(expectedGainVsLowestBuyOrderUsd, selectedCurrency, exchangeRates),
         expectedGainLabel,
         expectedGainColorClass,
         expectedGainVsLastSaleColorClass,
@@ -203,7 +213,7 @@ export function useProfitableSkins(
         imageUrl,
       };
     });
-  }, [rawSkins]);
+  }, [rawSkins, selectedCurrency, exchangeRates]);
 
   // Calculate total count
   const totalCount = transformedSkins.length;
@@ -232,28 +242,25 @@ export function useProfitableSkins(
  * @param marketPrice - Market price in cents
  * @param marketCurrency - Currency of the market price
  * @param steamPrice - Steam price in cents USD
+ * @param exchangeRates - Exchange rates object
  * @returns Expected gain in cents USD, or null if calculation not possible
  */
 function calculateExpectedGain(
   marketPrice: number,
   marketCurrency: string,
-  steamPrice: number | null
+  steamPrice: number | null,
+  exchangeRates: { usd: number; brl: number; eur: number }
 ): number | null {
   if (steamPrice === null) {
     return null;
   }
 
-  // Convert market price to USD cents if needed
-  let marketPriceUsd = marketPrice;
-
-  // Simple conversion rates (ideally would come from API)
-  // For now, assuming BRL to USD conversion ~ 5:1
-  if (marketCurrency === "BRL") {
-    marketPriceUsd = Math.round(marketPrice / 5);
-  } else if (marketCurrency === "EUR") {
-    marketPriceUsd = Math.round(marketPrice * 1.1);
-  }
-  // USD stays as is
+  // Convert market price to USD cents using real exchange rates
+  const marketPriceUsd = convertMarketPriceToUSD(
+    marketPrice,
+    marketCurrency,
+    exchangeRates
+  );
 
   // Calculate Steam price after 15% fee (seller receives 85%)
   const steamPriceAfterFee = Math.round(steamPrice * 0.85);
@@ -361,4 +368,30 @@ function clampBetweenZeroAndOne(value: number): number {
   }
 
   return value;
+}
+
+/**
+ * Convert market price from its native currency to USD cents
+ * @param marketPrice - Price in cents in native currency
+ * @param marketCurrency - Currency code (USD, BRL, EUR)
+ * @param exchangeRates - Exchange rates object
+ * @returns Price in USD cents
+ */
+function convertMarketPriceToUSD(
+  marketPrice: number,
+  marketCurrency: string,
+  exchangeRates: { usd: number; brl: number; eur: number }
+): number {
+  // If already in USD, return as-is
+  if (marketCurrency === "USD") {
+    return marketPrice;
+  }
+
+  // Convert from source currency to USD
+  const currencyKey = marketCurrency.toLowerCase() as "usd" | "brl" | "eur";
+  const rate = exchangeRates[currencyKey] || 1;
+
+  // To convert FROM a currency TO USD, we divide by the rate
+  // Example: if 1 USD = 5 BRL (rate = 5), then 500 BRL cents = 500 / 5 = 100 USD cents
+  return Math.round(marketPrice / rate);
 }
